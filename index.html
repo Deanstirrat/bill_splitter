@@ -192,6 +192,17 @@
         font-weight: 600;
       }
 
+      .discrepancy.warning {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      .balance-note {
+        font-size: 12px;
+        color: #9ca3af;
+        margin: 0;
+      }
+
       .footer {
         display: flex;
         justify-content: flex-end;
@@ -303,7 +314,7 @@
             <div class="person-card">
               <header>
                 <strong>Sam</strong>
-                <span class="pill">$79.78</span>
+                <span class="pill">$79.84</span>
               </header>
               <div class="items">
                 <div class="item-row">
@@ -346,6 +357,9 @@
           </div>
 
           <div class="validation-panel">
+            <p class="balance-note">
+              In balance means the computed total is within $0.01 of the input bill total.
+            </p>
             <div class="summary-row">
               <span>Alex</span>
               <strong>$72.24</strong>
@@ -356,13 +370,23 @@
             </div>
             <div class="summary-row">
               <span>Sam</span>
-              <strong>$79.78</strong>
+              <strong>$79.84</strong>
             </div>
             <div class="summary-row">
-              <span>Per-person total</span>
+              <span>Input total</span>
               <strong>$232.94</strong>
             </div>
-            <div class="discrepancy">No discrepancy vs. bill total</div>
+            <div class="summary-row">
+              <span>Computed total</span>
+              <strong>$233.00</strong>
+            </div>
+            <div class="summary-row">
+              <span>Difference</span>
+              <strong>+$0.06</strong>
+            </div>
+            <div class="discrepancy warning">
+              Out of balance by $0.06. Adjust an item or fee to match the bill total.
+            </div>
           </div>
 
           <div class="footer">
