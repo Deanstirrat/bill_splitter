@@ -209,6 +209,21 @@
         gap: 12px;
       }
 
+      .helper-text {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0;
+      }
+
+      .empty-state {
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px dashed #d1d5db;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+      }
+
       @media (max-width: 1000px) {
         .layout {
           grid-template-columns: 1fr;
@@ -232,161 +247,77 @@
           <div class="field-grid">
             <div class="field">
               <label>Bill name</label>
-              <input type="text" value="Dinner at La Mesa" />
-            </div>
-            <div class="field">
-              <label>Subtotal</label>
-              <input type="text" value="$184.50" />
+              <input id="bill-name" type="text" placeholder="Dinner at La Mesa" />
             </div>
             <div class="field">
               <label>Tax</label>
-              <input type="text" value="$14.76" />
+              <input id="bill-tax" type="text" placeholder="$0.00" />
             </div>
             <div class="field">
               <label>Tip</label>
-              <input type="text" value="$27.68" />
+              <input id="bill-tip" type="text" placeholder="$0.00" />
             </div>
             <div class="field">
               <label>Additional fees</label>
-              <input type="text" value="$6.00" />
+              <input id="bill-fee" type="text" placeholder="$0.00" />
+            </div>
+            <div class="field">
+              <label>Bill total (optional)</label>
+              <input id="bill-actual-total" type="text" placeholder="$0.00" />
             </div>
             <div class="field">
               <label>Fee allocation</label>
-              <select>
-                <option>Even split</option>
-                <option>Proportional</option>
+              <select id="bill-fee-allocation">
+                <option value="even">Even split</option>
+                <option value="proportional">Proportional</option>
               </select>
             </div>
           </div>
           <div class="summary-row">
             <span class="section-label">Bill total</span>
-            <strong>$232.94</strong>
+            <strong id="bill-total">$0.00</strong>
           </div>
+          <p class="helper-text">Totals update as you add items and fees.</p>
         </section>
 
         <section class="card">
           <div class="summary-row">
             <h2>People</h2>
-            <button class="button">+ Add person</button>
+            <button class="button" id="add-person">+ Add person</button>
           </div>
           <p class="section-label">Inline editing for names and item prices</p>
-          <div class="people-list">
-            <div class="person-card">
-              <header>
-                <strong>Alex</strong>
-                <span class="pill">$72.24</span>
-              </header>
-              <div class="items">
-                <div class="item-row">
-                  <input type="text" value="Pasta" />
-                  <input type="text" value="$18.00" />
-                  <button class="button secondary">Remove</button>
-                </div>
-                <div class="item-row">
-                  <input type="text" value="Wine" />
-                  <input type="text" value="$22.00" />
-                  <button class="button secondary">Remove</button>
-                </div>
-                <button class="button">+ Add item</button>
-              </div>
-            </div>
-
-            <div class="person-card">
-              <header>
-                <strong>Maya</strong>
-                <span class="pill">$80.92</span>
-              </header>
-              <div class="items">
-                <div class="item-row">
-                  <input type="text" value="Salmon" />
-                  <input type="text" value="$24.00" />
-                  <button class="button secondary">Remove</button>
-                </div>
-                <div class="item-row">
-                  <input type="text" value="Dessert" />
-                  <input type="text" value="$12.50" />
-                  <button class="button secondary">Remove</button>
-                </div>
-                <button class="button">+ Add item</button>
-              </div>
-            </div>
-
-            <div class="person-card">
-              <header>
-                <strong>Sam</strong>
-                <span class="pill">$79.84</span>
-              </header>
-              <div class="items">
-                <div class="item-row">
-                  <input type="text" value="Steak" />
-                  <input type="text" value="$27.00" />
-                  <button class="button secondary">Remove</button>
-                </div>
-                <div class="item-row">
-                  <input type="text" value="Soda" />
-                  <input type="text" value="$4.00" />
-                  <button class="button secondary">Remove</button>
-                </div>
-                <button class="button">+ Add item</button>
-              </div>
-            </div>
-          </div>
+          <div class="people-list" id="people-list"></div>
+          <div class="empty-state" id="people-empty">Add someone to start entering items.</div>
         </section>
 
         <section class="card">
           <h2>Summary</h2>
           <div class="summary-row">
             <span>Subtotal</span>
-            <span>$184.50</span>
+            <span id="summary-subtotal">$0.00</span>
           </div>
           <div class="summary-row">
             <span>Tax</span>
-            <span>$14.76</span>
+            <span id="summary-tax">$0.00</span>
           </div>
           <div class="summary-row">
             <span>Tip</span>
-            <span>$27.68</span>
+            <span id="summary-tip">$0.00</span>
           </div>
           <div class="summary-row">
             <span>Fees</span>
-            <span>$6.00</span>
+            <span id="summary-fee">$0.00</span>
           </div>
           <div class="summary-row">
             <strong>Total</strong>
-            <strong>$232.94</strong>
+            <strong id="summary-total">$0.00</strong>
           </div>
 
           <div class="validation-panel">
             <p class="balance-note">
-              In balance means the computed total is within $0.01 of the input bill total.
+              Track item subtotals here. Validation and reconciliation arrive in milestone 2.
             </p>
-            <div class="summary-row">
-              <span>Alex</span>
-              <strong>$72.24</strong>
-            </div>
-            <div class="summary-row">
-              <span>Maya</span>
-              <strong>$80.92</strong>
-            </div>
-            <div class="summary-row">
-              <span>Sam</span>
-              <strong>$79.84</strong>
-            </div>
-            <div class="summary-row">
-              <span>Input total</span>
-              <strong>$232.94</strong>
-            </div>
-            <div class="summary-row">
-              <span>Computed total</span>
-              <strong>$233.00</strong>
-            </div>
-            <div class="summary-row">
-              <span>Difference</span>
-              <strong>+$0.06</strong>
-            </div>
-            <div class="discrepancy warning">
-              Out of balance by $0.06. Adjust an item or fee to match the bill total.
-            </div>
+            <div id="person-summary"></div>
           </div>
 
           <div class="footer">
@@ -396,5 +327,267 @@
         </section>
       </div>
     </div>
+    <script>
+      const currencyFormatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      });
+
+      const createId = (() => {
+        let index = 0;
+        return () => {
+          index += 1;
+          return `id-${index}`;
+        };
+      })();
+
+      const state = {
+        bill: {
+          name: "",
+          tax: "",
+          tip: "",
+          fee: "",
+          feeAllocation: "even",
+          actualTotal: "",
+        },
+        people: [],
+      };
+
+      const elements = {
+        billName: document.querySelector("#bill-name"),
+        billTax: document.querySelector("#bill-tax"),
+        billTip: document.querySelector("#bill-tip"),
+        billFee: document.querySelector("#bill-fee"),
+        billActualTotal: document.querySelector("#bill-actual-total"),
+        billFeeAllocation: document.querySelector("#bill-fee-allocation"),
+        billTotal: document.querySelector("#bill-total"),
+        addPerson: document.querySelector("#add-person"),
+        peopleList: document.querySelector("#people-list"),
+        peopleEmpty: document.querySelector("#people-empty"),
+        summarySubtotal: document.querySelector("#summary-subtotal"),
+        summaryTax: document.querySelector("#summary-tax"),
+        summaryTip: document.querySelector("#summary-tip"),
+        summaryFee: document.querySelector("#summary-fee"),
+        summaryTotal: document.querySelector("#summary-total"),
+        personSummary: document.querySelector("#person-summary"),
+      };
+
+      const parseCurrency = (value) => {
+        if (!value) return 0;
+        const numeric = Number.parseFloat(value.replace(/[^0-9.-]/g, ""));
+        return Number.isNaN(numeric) ? 0 : numeric;
+      };
+
+      const formatCurrency = (value) => currencyFormatter.format(value);
+
+      const getPersonSubtotal = (person) =>
+        person.items.reduce((total, item) => total + parseCurrency(item.price), 0);
+
+      const getItemsSubtotal = () =>
+        state.people.reduce((total, person) => total + getPersonSubtotal(person), 0);
+
+      const renderSummary = () => {
+        const subtotal = getItemsSubtotal();
+        const tax = parseCurrency(state.bill.tax);
+        const tip = parseCurrency(state.bill.tip);
+        const fee = parseCurrency(state.bill.fee);
+        const total = subtotal + tax + tip + fee;
+
+        elements.summarySubtotal.textContent = formatCurrency(subtotal);
+        elements.summaryTax.textContent = formatCurrency(tax);
+        elements.summaryTip.textContent = formatCurrency(tip);
+        elements.summaryFee.textContent = formatCurrency(fee);
+        elements.summaryTotal.textContent = formatCurrency(total);
+        elements.billTotal.textContent = formatCurrency(total);
+      };
+
+      const renderPersonSummary = () => {
+        elements.personSummary.innerHTML = "";
+        if (!state.people.length) {
+          elements.personSummary.innerHTML =
+            '<p class="balance-note">No people yet. Add someone to see their subtotal.</p>';
+          return;
+        }
+        state.people.forEach((person) => {
+          const row = document.createElement("div");
+          row.className = "summary-row";
+          row.innerHTML = `<span>${person.name || "Untitled"}</span><strong>${formatCurrency(
+            getPersonSubtotal(person)
+          )}</strong>`;
+          elements.personSummary.appendChild(row);
+        });
+      };
+
+      const renderPeople = () => {
+        elements.peopleList.innerHTML = "";
+        state.people.forEach((person) => {
+          const card = document.createElement("div");
+          card.className = "person-card";
+
+          const header = document.createElement("header");
+          header.innerHTML = `
+            <strong>${person.name || "Untitled person"}</strong>
+            <span class="pill">${formatCurrency(getPersonSubtotal(person))}</span>
+          `;
+
+          const items = document.createElement("div");
+          items.className = "items";
+
+          person.items.forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "item-row";
+            row.innerHTML = `
+              <input type="text" value="${item.name}" data-person="${person.id}" data-item="${item.id}" data-field="name" />
+              <input type="text" value="${item.price}" data-person="${person.id}" data-item="${item.id}" data-field="price" />
+              <button class="button secondary" data-person="${person.id}" data-item="${item.id}" data-action="remove-item">Remove</button>
+            `;
+            items.appendChild(row);
+          });
+
+          const addItemButton = document.createElement("button");
+          addItemButton.className = "button";
+          addItemButton.textContent = "+ Add item";
+          addItemButton.dataset.person = person.id;
+          addItemButton.dataset.action = "add-item";
+          items.appendChild(addItemButton);
+
+          const nameField = document.createElement("div");
+          nameField.className = "field";
+          nameField.innerHTML = `
+            <label>Person name</label>
+            <input type="text" value="${person.name}" data-person="${person.id}" data-field="person-name" />
+          `;
+
+          const removeButton = document.createElement("button");
+          removeButton.className = "button secondary";
+          removeButton.textContent = "Remove person";
+          removeButton.dataset.person = person.id;
+          removeButton.dataset.action = "remove-person";
+
+          card.appendChild(header);
+          card.appendChild(nameField);
+          card.appendChild(items);
+          card.appendChild(removeButton);
+          elements.peopleList.appendChild(card);
+        });
+
+        elements.peopleEmpty.style.display = state.people.length ? "none" : "block";
+      };
+
+      const render = () => {
+        renderPeople();
+        renderSummary();
+        renderPersonSummary();
+      };
+
+      const updateBillField = (field, value) => {
+        state.bill[field] = value;
+        renderSummary();
+      };
+
+      const updatePersonName = (personId, value) => {
+        const person = state.people.find((entry) => entry.id === personId);
+        if (person) {
+          person.name = value;
+          render();
+        }
+      };
+
+      const updateItemField = (personId, itemId, field, value) => {
+        const person = state.people.find((entry) => entry.id === personId);
+        if (!person) return;
+        const item = person.items.find((entry) => entry.id === itemId);
+        if (!item) return;
+        item[field] = value;
+        render();
+      };
+
+      const addPerson = () => {
+        state.people.push({
+          id: createId(),
+          name: "",
+          items: [
+            { id: createId(), name: "", price: "" },
+            { id: createId(), name: "", price: "" },
+          ],
+        });
+        render();
+      };
+
+      const removePerson = (personId) => {
+        state.people = state.people.filter((person) => person.id !== personId);
+        render();
+      };
+
+      const addItem = (personId) => {
+        const person = state.people.find((entry) => entry.id === personId);
+        if (!person) return;
+        person.items.push({ id: createId(), name: "", price: "" });
+        render();
+      };
+
+      const removeItem = (personId, itemId) => {
+        const person = state.people.find((entry) => entry.id === personId);
+        if (!person) return;
+        person.items = person.items.filter((item) => item.id !== itemId);
+        render();
+      };
+
+      elements.addPerson.addEventListener("click", addPerson);
+
+      elements.peopleList.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        const personId = target.dataset.person;
+        const itemId = target.dataset.item;
+        const field = target.dataset.field;
+        if (field === "person-name" && personId) {
+          updatePersonName(personId, target.value);
+        }
+        if (personId && itemId && field) {
+          updateItemField(personId, itemId, field, target.value);
+        }
+      });
+
+      elements.peopleList.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const action = target.dataset.action;
+        const personId = target.dataset.person;
+        const itemId = target.dataset.item;
+        if (!action || !personId) return;
+        if (action === "add-item") {
+          addItem(personId);
+        }
+        if (action === "remove-item" && itemId) {
+          removeItem(personId, itemId);
+        }
+        if (action === "remove-person") {
+          removePerson(personId);
+        }
+      });
+
+      elements.billName.addEventListener("input", (event) => {
+        updateBillField("name", event.target.value);
+      });
+      elements.billTax.addEventListener("input", (event) => {
+        updateBillField("tax", event.target.value);
+      });
+      elements.billTip.addEventListener("input", (event) => {
+        updateBillField("tip", event.target.value);
+      });
+      elements.billFee.addEventListener("input", (event) => {
+        updateBillField("fee", event.target.value);
+      });
+      elements.billActualTotal.addEventListener("input", (event) => {
+        updateBillField("actualTotal", event.target.value);
+      });
+      elements.billFeeAllocation.addEventListener("change", (event) => {
+        updateBillField("feeAllocation", event.target.value);
+      });
+
+      addPerson();
+      addPerson();
+    </script>
   </body>
 </html>
