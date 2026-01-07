@@ -266,7 +266,7 @@
               <input id="bill-actual-total" type="text" placeholder="$0.00" />
             </div>
             <div class="field">
-              <label>Fee allocation</label>
+              <label>Additional fee allocation</label>
               <select id="bill-fee-allocation">
                 <option value="even">Even split</option>
                 <option value="proportional">Proportional</option>
@@ -283,11 +283,11 @@
         <section class="card">
           <div class="summary-row">
             <h2>People</h2>
-            <button class="button" id="add-person">+ Add person</button>
           </div>
           <p class="section-label">Inline editing for names and item prices</p>
           <div class="people-list" id="people-list"></div>
           <div class="empty-state" id="people-empty">Add someone to start entering items.</div>
+          <button class="button" id="add-person">+ Add person</button>
         </section>
 
         <section class="card">
@@ -423,6 +423,7 @@
         state.people.forEach((person) => {
           const card = document.createElement("div");
           card.className = "person-card";
+          card.dataset.person = person.id;
 
           const header = document.createElement("header");
           header.innerHTML = `
@@ -437,8 +438,8 @@
             const row = document.createElement("div");
             row.className = "item-row";
             row.innerHTML = `
-              <input type="text" value="${item.name}" data-person="${person.id}" data-item="${item.id}" data-field="name" />
-              <input type="text" value="${item.price}" data-person="${person.id}" data-item="${item.id}" data-field="price" />
+              <input type="text" value="${item.name}" placeholder="Item name" data-person="${person.id}" data-item="${item.id}" data-field="name" />
+              <input type="text" value="${item.price}" placeholder="$0.00" data-person="${person.id}" data-item="${item.id}" data-field="price" />
               <button class="button secondary" data-person="${person.id}" data-item="${item.id}" data-action="remove-item">Remove</button>
             `;
             items.appendChild(row);
@@ -485,11 +486,34 @@
         renderSummary();
       };
 
+      const updatePersonCard = (personId) => {
+        const card = elements.peopleList.querySelector(
+          `.person-card[data-person="${personId}"]`
+        );
+        if (!card) return;
+        const person = state.people.find((entry) => entry.id === personId);
+        if (!person) return;
+        const headerName = card.querySelector("header strong");
+        const headerPill = card.querySelector("header .pill");
+        if (headerName) {
+          headerName.textContent = person.name || "Untitled person";
+        }
+        if (headerPill) {
+          headerPill.textContent = formatCurrency(getPersonSubtotal(person));
+        }
+      };
+
+      const formatCurrencyInput = (input) => {
+        const value = parseCurrency(input.value);
+        input.value = value ? formatCurrency(value) : "";
+      };
+
       const updatePersonName = (personId, value) => {
         const person = state.people.find((entry) => entry.id === personId);
         if (person) {
           person.name = value;
-          render();
+          updatePersonCard(personId);
+          renderPersonSummary();
         }
       };
 
@@ -499,7 +523,9 @@
         const item = person.items.find((entry) => entry.id === itemId);
         if (!item) return;
         item[field] = value;
-        render();
+        updatePersonCard(personId);
+        renderSummary();
+        renderPersonSummary();
       };
 
       const addPerson = () => {
@@ -549,6 +575,14 @@
         }
       });
 
+      elements.peopleList.addEventListener("blur", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (target.dataset.field === "price") {
+          formatCurrencyInput(target);
+        }
+      }, true);
+
       elements.peopleList.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof HTMLElement)) return;
@@ -581,6 +615,19 @@
       });
       elements.billActualTotal.addEventListener("input", (event) => {
         updateBillField("actualTotal", event.target.value);
+      });
+
+      elements.billTax.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+      });
+      elements.billTip.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+      });
+      elements.billFee.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+      });
+      elements.billActualTotal.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
       });
       elements.billFeeAllocation.addEventListener("change", (event) => {
         updateBillField("feeAllocation", event.target.value);
