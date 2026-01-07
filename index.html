@@ -184,6 +184,18 @@
         color: #e5e7eb;
       }
 
+      .person-breakdown {
+        display: grid;
+        gap: 6px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .person-breakdown:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
       .discrepancy {
         padding: 10px 12px;
         border-radius: 10px;
@@ -386,6 +398,34 @@
       const getItemsSubtotal = () =>
         state.people.reduce((total, person) => total + getPersonSubtotal(person), 0);
 
+      const getAllocationRatio = (person) => {
+        const subtotal = getPersonSubtotal(person);
+        const totalSubtotal = getItemsSubtotal();
+        if (!totalSubtotal) return 0;
+        return subtotal / totalSubtotal;
+      };
+
+      const getFeeAllocationRatio = (person) => {
+        if (state.bill.feeAllocation === "even") {
+          return state.people.length ? 1 / state.people.length : 0;
+        }
+        return getAllocationRatio(person);
+      };
+
+      const getPersonTotals = (person) => {
+        const subtotal = getPersonSubtotal(person);
+        const ratio = getAllocationRatio(person);
+        const feeRatio = getFeeAllocationRatio(person);
+        const tax = parseCurrency(state.bill.tax);
+        const tip = parseCurrency(state.bill.tip);
+        const fee = parseCurrency(state.bill.fee);
+        const taxShare = tax * ratio;
+        const tipShare = tip * ratio;
+        const feeShare = fee * feeRatio;
+        const total = subtotal + taxShare + tipShare + feeShare;
+        return { subtotal, taxShare, tipShare, feeShare, total };
+      };
+
       const renderSummary = () => {
         const subtotal = getItemsSubtotal();
         const tax = parseCurrency(state.bill.tax);
@@ -409,12 +449,33 @@
           return;
         }
         state.people.forEach((person) => {
-          const row = document.createElement("div");
-          row.className = "summary-row";
-          row.innerHTML = `<span>${person.name || "Untitled"}</span><strong>${formatCurrency(
-            getPersonSubtotal(person)
-          )}</strong>`;
-          elements.personSummary.appendChild(row);
+          const totals = getPersonTotals(person);
+          const name = person.name || "Untitled";
+          const block = document.createElement("div");
+          block.className = "person-breakdown";
+          block.innerHTML = `
+            <div class="summary-row">
+              <strong>${name}</strong>
+              <strong>${formatCurrency(totals.total)}</strong>
+            </div>
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span>${formatCurrency(totals.subtotal)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Tax share</span>
+              <span>${formatCurrency(totals.taxShare)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Tip share</span>
+              <span>${formatCurrency(totals.tipShare)}</span>
+            </div>
+            <div class="summary-row">
+              <span>Fee share</span>
+              <span>${formatCurrency(totals.feeShare)}</span>
+            </div>
+          `;
+          elements.personSummary.appendChild(block);
         });
       };
 
@@ -426,9 +487,10 @@
           card.dataset.person = person.id;
 
           const header = document.createElement("header");
+          const totals = getPersonTotals(person);
           header.innerHTML = `
             <strong>${person.name || "Untitled person"}</strong>
-            <span class="pill">${formatCurrency(getPersonSubtotal(person))}</span>
+            <span class="pill">${formatCurrency(totals.subtotal)}</span>
           `;
 
           const items = document.createElement("div");
@@ -499,7 +561,7 @@
           headerName.textContent = person.name || "Untitled person";
         }
         if (headerPill) {
-          headerPill.textContent = formatCurrency(getPersonSubtotal(person));
+          headerPill.textContent = formatCurrency(getPersonTotals(person).subtotal);
         }
       };
 
