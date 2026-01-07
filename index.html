@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bill Splitter</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Inter", "Segoe UI", sans-serif;
+        background: #f5f6f8;
+        color: #1f2937;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px;
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        gap: 24px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      header p {
+        margin: 6px 0 0;
+        color: #6b7280;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr) minmax(280px, 1fr);
+        gap: 24px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .section-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+      }
+
+      .field-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 13px;
+      }
+
+      input,
+      select {
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        font-size: 14px;
+      }
+
+      .button-row {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        background: #2563eb;
+        color: white;
+        cursor: pointer;
+      }
+
+      .button.secondary {
+        background: #e5e7eb;
+        color: #1f2937;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #f3f4f6;
+        border-radius: 999px;
+        font-size: 13px;
+      }
+
+      .people-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .person-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .person-card header {
+        padding: 0;
+        box-shadow: none;
+        background: transparent;
+        justify-content: space-between;
+      }
+
+      .items {
+        display: grid;
+        gap: 8px;
+      }
+
+      .item-row {
+        display: grid;
+        grid-template-columns: 1fr 90px auto;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .summary-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+      }
+
+      .summary-row strong {
+        font-size: 16px;
+      }
+
+      .validation-panel {
+        background: #111827;
+        color: white;
+        border-radius: 14px;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .validation-panel .summary-row {
+        color: #e5e7eb;
+      }
+
+      .discrepancy {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #fef3c7;
+        color: #92400e;
+        font-weight: 600;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      @media (max-width: 1000px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <h1>Bill Splitter</h1>
+          <p>Inline editing with immediate totals and reconciliation.</p>
+        </div>
+        <div class="pill">Last updated 2 minutes ago</div>
+      </header>
+
+      <div class="layout">
+        <section class="card">
+          <h2>Bill details</h2>
+          <div class="field-grid">
+            <div class="field">
+              <label>Bill name</label>
+              <input type="text" value="Dinner at La Mesa" />
+            </div>
+            <div class="field">
+              <label>Subtotal</label>
+              <input type="text" value="$184.50" />
+            </div>
+            <div class="field">
+              <label>Tax</label>
+              <input type="text" value="$14.76" />
+            </div>
+            <div class="field">
+              <label>Tip</label>
+              <input type="text" value="$27.68" />
+            </div>
+            <div class="field">
+              <label>Additional fees</label>
+              <input type="text" value="$6.00" />
+            </div>
+            <div class="field">
+              <label>Fee allocation</label>
+              <select>
+                <option>Even split</option>
+                <option>Proportional</option>
+              </select>
+            </div>
+          </div>
+          <div class="summary-row">
+            <span class="section-label">Bill total</span>
+            <strong>$232.94</strong>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="summary-row">
+            <h2>People</h2>
+            <button class="button">+ Add person</button>
+          </div>
+          <p class="section-label">Inline editing for names and item prices</p>
+          <div class="people-list">
+            <div class="person-card">
+              <header>
+                <strong>Alex</strong>
+                <span class="pill">$72.24</span>
+              </header>
+              <div class="items">
+                <div class="item-row">
+                  <input type="text" value="Pasta" />
+                  <input type="text" value="$18.00" />
+                  <button class="button secondary">Remove</button>
+                </div>
+                <div class="item-row">
+                  <input type="text" value="Wine" />
+                  <input type="text" value="$22.00" />
+                  <button class="button secondary">Remove</button>
+                </div>
+                <button class="button">+ Add item</button>
+              </div>
+            </div>
+
+            <div class="person-card">
+              <header>
+                <strong>Maya</strong>
+                <span class="pill">$80.92</span>
+              </header>
+              <div class="items">
+                <div class="item-row">
+                  <input type="text" value="Salmon" />
+                  <input type="text" value="$24.00" />
+                  <button class="button secondary">Remove</button>
+                </div>
+                <div class="item-row">
+                  <input type="text" value="Dessert" />
+                  <input type="text" value="$12.50" />
+                  <button class="button secondary">Remove</button>
+                </div>
+                <button class="button">+ Add item</button>
+              </div>
+            </div>
+
+            <div class="person-card">
+              <header>
+                <strong>Sam</strong>
+                <span class="pill">$79.78</span>
+              </header>
+              <div class="items">
+                <div class="item-row">
+                  <input type="text" value="Steak" />
+                  <input type="text" value="$27.00" />
+                  <button class="button secondary">Remove</button>
+                </div>
+                <div class="item-row">
+                  <input type="text" value="Soda" />
+                  <input type="text" value="$4.00" />
+                  <button class="button secondary">Remove</button>
+                </div>
+                <button class="button">+ Add item</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Summary</h2>
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span>$184.50</span>
+          </div>
+          <div class="summary-row">
+            <span>Tax</span>
+            <span>$14.76</span>
+          </div>
+          <div class="summary-row">
+            <span>Tip</span>
+            <span>$27.68</span>
+          </div>
+          <div class="summary-row">
+            <span>Fees</span>
+            <span>$6.00</span>
+          </div>
+          <div class="summary-row">
+            <strong>Total</strong>
+            <strong>$232.94</strong>
+          </div>
+
+          <div class="validation-panel">
+            <div class="summary-row">
+              <span>Alex</span>
+              <strong>$72.24</strong>
+            </div>
+            <div class="summary-row">
+              <span>Maya</span>
+              <strong>$80.92</strong>
+            </div>
+            <div class="summary-row">
+              <span>Sam</span>
+              <strong>$79.78</strong>
+            </div>
+            <div class="summary-row">
+              <span>Per-person total</span>
+              <strong>$232.94</strong>
+            </div>
+            <div class="discrepancy">No discrepancy vs. bill total</div>
+          </div>
+
+          <div class="footer">
+            <button class="button secondary">Save draft</button>
+            <button class="button">Finalize split</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
