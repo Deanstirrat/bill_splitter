@@ -89,6 +89,16 @@
         font-size: 13px;
       }
 
+      .field-inline {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .field-inline select {
+        min-width: 110px;
+      }
+
       input,
       select {
         padding: 8px 12px;
@@ -263,11 +273,23 @@
             </div>
             <div class="field">
               <label>Tax</label>
-              <input id="bill-tax" type="text" placeholder="$0.00" />
+              <div class="field-inline">
+                <select id="bill-tax-mode">
+                  <option value="amount">Amount</option>
+                  <option value="percent">Percent</option>
+                </select>
+                <input id="bill-tax" type="text" placeholder="$0.00" />
+              </div>
             </div>
             <div class="field">
               <label>Tip</label>
-              <input id="bill-tip" type="text" placeholder="$0.00" />
+              <div class="field-inline">
+                <select id="bill-tip-mode">
+                  <option value="amount">Amount</option>
+                  <option value="percent">Percent</option>
+                </select>
+                <input id="bill-tip" type="text" placeholder="$0.00" />
+              </div>
             </div>
             <div class="field">
               <label>Additional fees</label>
@@ -357,7 +379,9 @@
         bill: {
           name: "",
           tax: "",
+          taxMode: "amount",
           tip: "",
+          tipMode: "amount",
           fee: "",
           feeAllocation: "even",
           actualTotal: "",
@@ -368,7 +392,9 @@
       const elements = {
         billName: document.querySelector("#bill-name"),
         billTax: document.querySelector("#bill-tax"),
+        billTaxMode: document.querySelector("#bill-tax-mode"),
         billTip: document.querySelector("#bill-tip"),
+        billTipMode: document.querySelector("#bill-tip-mode"),
         billFee: document.querySelector("#bill-fee"),
         billActualTotal: document.querySelector("#bill-actual-total"),
         billFeeAllocation: document.querySelector("#bill-fee-allocation"),
@@ -391,6 +417,12 @@
       };
 
       const formatCurrency = (value) => currencyFormatter.format(value);
+
+      const parsePercent = (value) => {
+        if (!value) return 0;
+        const numeric = Number.parseFloat(value.replace(/[^0-9.-]/g, ""));
+        return Number.isNaN(numeric) ? 0 : numeric / 100;
+      };
 
       const getPersonSubtotal = (person) =>
         person.items.reduce((total, item) => total + parseCurrency(item.price), 0);
@@ -416,8 +448,8 @@
         const subtotal = getPersonSubtotal(person);
         const ratio = getAllocationRatio(person);
         const feeRatio = getFeeAllocationRatio(person);
-        const tax = parseCurrency(state.bill.tax);
-        const tip = parseCurrency(state.bill.tip);
+        const tax = getBillTaxAmount();
+        const tip = getBillTipAmount();
         const fee = parseCurrency(state.bill.fee);
         const taxShare = tax * ratio;
         const tipShare = tip * ratio;
@@ -426,10 +458,24 @@
         return { subtotal, taxShare, tipShare, feeShare, total };
       };
 
+      const getBillTaxAmount = () => {
+        if (state.bill.taxMode === "percent") {
+          return getItemsSubtotal() * parsePercent(state.bill.tax);
+        }
+        return parseCurrency(state.bill.tax);
+      };
+
+      const getBillTipAmount = () => {
+        if (state.bill.tipMode === "percent") {
+          return getItemsSubtotal() * parsePercent(state.bill.tip);
+        }
+        return parseCurrency(state.bill.tip);
+      };
+
       const renderSummary = () => {
         const subtotal = getItemsSubtotal();
-        const tax = parseCurrency(state.bill.tax);
-        const tip = parseCurrency(state.bill.tip);
+        const tax = getBillTaxAmount();
+        const tip = getBillTipAmount();
         const fee = parseCurrency(state.bill.fee);
         const total = subtotal + tax + tip + fee;
 
@@ -546,6 +592,7 @@
       const updateBillField = (field, value) => {
         state.bill[field] = value;
         renderSummary();
+        renderPersonSummary();
       };
 
       const updatePersonCard = (personId) => {
@@ -568,6 +615,11 @@
       const formatCurrencyInput = (input) => {
         const value = parseCurrency(input.value);
         input.value = value ? formatCurrency(value) : "";
+      };
+
+      const formatPercentInput = (input) => {
+        const numeric = Number.parseFloat(input.value.replace(/[^0-9.-]/g, ""));
+        input.value = Number.isNaN(numeric) ? "" : `${numeric}%`;
       };
 
       const updatePersonName = (personId, value) => {
@@ -680,9 +732,17 @@
       });
 
       elements.billTax.addEventListener("blur", (event) => {
+        if (state.bill.taxMode === "percent") {
+          formatPercentInput(event.target);
+          return;
+        }
         formatCurrencyInput(event.target);
       });
       elements.billTip.addEventListener("blur", (event) => {
+        if (state.bill.tipMode === "percent") {
+          formatPercentInput(event.target);
+          return;
+        }
         formatCurrencyInput(event.target);
       });
       elements.billFee.addEventListener("blur", (event) => {
@@ -693,6 +753,12 @@
       });
       elements.billFeeAllocation.addEventListener("change", (event) => {
         updateBillField("feeAllocation", event.target.value);
+      });
+      elements.billTaxMode.addEventListener("change", (event) => {
+        updateBillField("taxMode", event.target.value);
+      });
+      elements.billTipMode.addEventListener("change", (event) => {
+        updateBillField("tipMode", event.target.value);
       });
 
       addPerson();
