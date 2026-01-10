@@ -231,6 +231,15 @@
         gap: 12px;
       }
 
+      .button.venmo {
+        background: #3d95ce;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       .helper-text {
         font-size: 12px;
         color: #6b7280;
@@ -497,12 +506,24 @@
         state.people.forEach((person) => {
           const totals = getPersonTotals(person);
           const name = person.name || "Untitled";
+          const note = state.bill.name.trim() || "Bill split";
+          const venmoParams = new URLSearchParams({
+            txn: "charge",
+            amount: totals.total.toFixed(2),
+            note,
+          });
+          const venmoLink = `venmo://paycharge?${venmoParams.toString()}`;
           const block = document.createElement("div");
           block.className = "person-breakdown";
           block.innerHTML = `
             <div class="summary-row">
               <strong>${name}</strong>
-              <strong>${formatCurrency(totals.total)}</strong>
+              <div class="button-row">
+                <strong>${formatCurrency(totals.total)}</strong>
+                <a class="button venmo" href="${venmoLink}" target="_blank" rel="noopener">
+                  Request on Venmo
+                </a>
+              </div>
             </div>
             <div class="summary-row">
               <span>Subtotal</span>
