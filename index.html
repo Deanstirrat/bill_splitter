@@ -523,35 +523,25 @@
         },
         ocr: {
           imageUrl: "",
+          service: "ocrSpace",
+          feedback: {
+            state: "idle",
+            message: "No OCR line items yet.",
+          },
           summary: {
             tax: "",
             tip: "",
             fee: "",
             total: "",
           },
-          items: [
-            {
-              id: createId(),
-              name: "Margherita Pizza",
-              price: "18.00",
-              confidence: 0.92,
-              status: "approved",
-            },
-            {
-              id: createId(),
-              name: "House Salad",
-              price: "9.50",
-              confidence: 0.64,
-              status: "pending",
-            },
-            {
-              id: createId(),
-              name: "Iced Tea",
-              price: "3.75",
-              confidence: 0.81,
-              status: "pending",
-            },
-          ],
+          totals: {
+            subtotal: 0,
+            tax: "",
+            tip: "",
+            fee: "",
+            total: "",
+          },
+          items: [],
         },
         people: [],
       };
@@ -824,7 +814,11 @@
           `;
           elements.ocrList.appendChild(row);
         });
-        elements.ocrEmpty.style.display = state.ocr.items.length ? "none" : "block";
+        const isEmpty = !state.ocr.items.length;
+        elements.ocrEmpty.style.display = isEmpty ? "block" : "none";
+        if (isEmpty) {
+          elements.ocrEmpty.textContent = state.ocr.feedback.message || "No OCR line items yet.";
+        }
       };
 
       const render = () => {
@@ -937,6 +931,185 @@
         }));
         renderOcrItems();
         renderOcrSummary();
+      };
+
+      const OCR_SERVICES = {
+        ocrSpace: {
+          id: "ocrSpace",
+          label: "OCR.Space",
+          async request({ file, url }) {
+            const endpoint = "https://api.ocr.space/parse/image";
+            const formData = new FormData();
+            formData.append("apikey", "helloworld");
+            formData.append("language", "eng");
+            formData.append("isOverlayRequired", "true");
+            if (file) {
+              formData.append("file", file);
+            } else if (url) {
+              formData.append("url", url);
+            }
+            const response = await fetch(endpoint, {
+              method: "POST",
+              body: formData,
+            });
+            if (!response.ok) {
+              throw new Error("OCR request failed. Please try again.");
+            }
+            return response.json();
+          },
+          parse(payload) {
+            if (!payload || payload.IsErroredOnProcessing) {
+              const message = payload?.ErrorMessage?.join(", ") || "OCR failed to read the receipt.";
+              throw new Error(message);
+            }
+            const parsed = payload.ParsedResults?.[0];
+            const lines = parsed?.TextOverlay?.Lines || [];
+            return lines.map((line) => {
+              const words = line.Words || [];
+              const confidences = words.map((word) => Number(word.Confidence || 0));
+              const averageConfidence = confidences.length
+                ? confidences.reduce((sum, value) => sum + value, 0) / confidences.length / 100
+                : 0.7;
+              return {
+                text: line.LineText || "",
+                confidence: averageConfidence,
+              };
+            });
+          },
+        },
+      };
+
+      const setOcrFeedback = ({ state: status, message }) => {
+        state.ocr.feedback = { state: status, message };
+        renderOcrItems();
+      };
+
+      const normalizeLineText = (text) => text.replace(/\s+/g, " ").trim();
+
+      const extractOcrTotals = (lines) => {
+        const totals = {
+          subtotal: 0,
+          tax: "",
+          tip: "",
+          fee: "",
+          total: "",
+        };
+        lines.forEach(({ text }) => {
+          const cleaned = normalizeLineText(text).toLowerCase();
+          const value = parseCurrency(cleaned);
+          if (!value) return;
+          if (cleaned.includes("subtotal")) {
+            totals.subtotal = value;
+            return;
+          }
+          if (cleaned.includes("tax")) {
+            totals.tax = formatCurrency(value);
+            return;
+          }
+          if (cleaned.includes("tip") || cleaned.includes("gratuity")) {
+            totals.tip = formatCurrency(value);
+            return;
+          }
+          if (cleaned.includes("fee") || cleaned.includes("service")) {
+            totals.fee = formatCurrency(value);
+            return;
+          }
+          if (cleaned.includes("total")) {
+            totals.total = formatCurrency(value);
+          }
+        });
+        return totals;
+      };
+
+      const isLikelySummaryLine = (text) =>
+        ["subtotal", "tax", "tip", "gratuity", "fee", "service", "total"].some((keyword) =>
+          text.includes(keyword)
+        );
+
+      const parseOcrLineItems = (lines) =>
+        lines
+          .map((line) => ({ ...line, normalized: normalizeLineText(line.text) }))
+          .filter((line) => line.normalized)
+          .filter((line) => !isLikelySummaryLine(line.normalized.toLowerCase()))
+          .map((line) => {
+            const match = line.normalized.match(/(.+?)\s+(-?\$?\d+(?:\.\d{2})?)/);
+            if (!match) return null;
+            const name = match[1].trim();
+            const priceValue = parseCurrency(match[2]);
+            if (!name || !priceValue) return null;
+            return {
+              id: createId(),
+              name,
+              price: formatCurrency(priceValue),
+              confidence: Number.isFinite(line.confidence) ? line.confidence : 0.7,
+              status: "pending",
+            };
+          })
+          .filter(Boolean);
+
+      const applyOcrTotalsToSummary = (totals) => {
+        state.ocr.totals = {
+          subtotal: totals.subtotal || 0,
+          tax: totals.tax || "",
+          tip: totals.tip || "",
+          fee: totals.fee || "",
+          total: totals.total || "",
+        };
+        state.ocr.summary.tax = totals.tax || "";
+        state.ocr.summary.tip = totals.tip || "";
+        state.ocr.summary.fee = totals.fee || "";
+        state.ocr.summary.total = totals.total || "";
+        elements.ocrTax.value = state.ocr.summary.tax;
+        elements.ocrTip.value = state.ocr.summary.tip;
+        elements.ocrFee.value = state.ocr.summary.fee;
+        elements.ocrTotal.value = state.ocr.summary.total;
+      };
+
+      const runOcrImport = async ({ file, url }) => {
+        if (!file && !url) {
+          setOcrFeedback({
+            state: "error",
+            message: "Select a receipt image or paste a URL to start OCR.",
+          });
+          return;
+        }
+        const service = OCR_SERVICES[state.ocr.service] || OCR_SERVICES.ocrSpace;
+        setOcrFeedback({ state: "loading", message: "Running OCR on your receipt..." });
+        state.ocr.items = [];
+        renderOcrItems();
+        try {
+          const payload = await service.request({ file, url });
+          const lines = service.parse(payload);
+          const totals = extractOcrTotals(lines);
+          const items = parseOcrLineItems(lines);
+          state.ocr.items = items;
+          applyOcrTotalsToSummary(totals);
+          if (!items.length) {
+            setOcrFeedback({
+              state: "empty",
+              message: "No line items detected. Adjust the image or try again.",
+            });
+          } else {
+            setOcrFeedback({ state: "ready", message: "" });
+          }
+          renderOcrItems();
+          renderOcrSummary();
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "OCR failed. Please try a different image.";
+          setOcrFeedback({ state: "error", message });
+          state.ocr.items = [];
+          applyOcrTotalsToSummary({
+            subtotal: 0,
+            tax: "",
+            tip: "",
+            fee: "",
+            total: "",
+          });
+          renderOcrSummary();
+        }
       };
 
       const getOrCreateUnassignedPerson = () => {
@@ -1112,6 +1285,24 @@
 
       elements.ocrImageUrl.addEventListener("input", (event) => {
         state.ocr.imageUrl = event.target.value;
+      });
+      elements.ocrImageUrl.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        const url = event.target.value.trim();
+        runOcrImport({ url });
+      });
+      elements.ocrImageUrl.addEventListener("change", (event) => {
+        const url = event.target.value.trim();
+        if (url) {
+          runOcrImport({ url });
+        }
+      });
+      elements.ocrImage.addEventListener("change", (event) => {
+        const file = event.target.files?.[0];
+        if (file) {
+          runOcrImport({ file });
+        }
       });
       elements.ocrTax.addEventListener("input", (event) => {
         state.ocr.summary.tax = event.target.value;
