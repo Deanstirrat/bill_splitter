@@ -510,6 +510,8 @@
         };
       })();
 
+      // OCR ingestion should map into state.bill (totals/tax/tip/name) and
+      // state.people[].items[] (line items). See README.md for field mapping.
       const state = {
         bill: {
           name: "",
