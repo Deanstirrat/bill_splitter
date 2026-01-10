@@ -421,6 +421,10 @@
                 <input id="ocr-tip" type="text" placeholder="$0.00" />
               </div>
               <div class="field">
+                <label>OCR Fees</label>
+                <input id="ocr-fee" type="text" placeholder="$0.00" />
+              </div>
+              <div class="field">
                 <label>OCR Total</label>
                 <input id="ocr-total" type="text" placeholder="$0.00" />
               </div>
@@ -440,6 +444,10 @@
             <div class="summary-row">
               <span class="section-label">OCR subtotal</span>
               <strong id="ocr-subtotal">$0.00</strong>
+            </div>
+            <div class="summary-row">
+              <span class="section-label">OCR fees</span>
+              <strong id="ocr-fee-total">$0.00</strong>
             </div>
             <div class="summary-row">
               <span class="section-label">OCR total estimate</span>
@@ -515,9 +523,10 @@
         },
         ocr: {
           imageUrl: "",
-          totals: {
+          summary: {
             tax: "",
             tip: "",
+            fee: "",
             total: "",
           },
           items: [
@@ -570,10 +579,12 @@
         ocrImageUrl: document.querySelector("#ocr-image-url"),
         ocrTax: document.querySelector("#ocr-tax"),
         ocrTip: document.querySelector("#ocr-tip"),
+        ocrFee: document.querySelector("#ocr-fee"),
         ocrTotal: document.querySelector("#ocr-total"),
         ocrList: document.querySelector("#ocr-list"),
         ocrEmpty: document.querySelector("#ocr-empty"),
         ocrSubtotal: document.querySelector("#ocr-subtotal"),
+        ocrFeeTotal: document.querySelector("#ocr-fee-total"),
         ocrTotalEstimate: document.querySelector("#ocr-total-estimate"),
         ocrApply: document.querySelector("#ocr-apply"),
         ocrMergeDuplicates: document.querySelector("#ocr-merge-duplicates"),
@@ -607,10 +618,11 @@
 
       const getOcrTotalEstimate = () => {
         const subtotal = getOcrSubtotal();
-        const tax = parseCurrency(state.ocr.totals.tax);
-        const tip = parseCurrency(state.ocr.totals.tip);
-        const totalOverride = parseCurrency(state.ocr.totals.total);
-        const computed = subtotal + tax + tip;
+        const tax = parseCurrency(state.ocr.summary.tax);
+        const tip = parseCurrency(state.ocr.summary.tip);
+        const fee = parseCurrency(state.ocr.summary.fee);
+        const totalOverride = parseCurrency(state.ocr.summary.total);
+        const computed = subtotal + tax + tip + fee;
         return totalOverride || computed;
       };
 
@@ -675,6 +687,7 @@
         const subtotal = getOcrSubtotal();
         const estimate = getOcrTotalEstimate();
         elements.ocrSubtotal.textContent = formatCurrency(subtotal);
+        elements.ocrFeeTotal.textContent = formatCurrency(parseCurrency(state.ocr.summary.fee));
         elements.ocrTotalEstimate.textContent = formatCurrency(estimate);
       };
 
@@ -948,17 +961,21 @@
           });
         }
 
-        if (state.ocr.totals.tax) {
-          state.bill.tax = state.ocr.totals.tax;
-          elements.billTax.value = state.ocr.totals.tax;
+        if (state.ocr.summary.tax) {
+          state.bill.tax = state.ocr.summary.tax;
+          elements.billTax.value = state.ocr.summary.tax;
         }
-        if (state.ocr.totals.tip) {
-          state.bill.tip = state.ocr.totals.tip;
-          elements.billTip.value = state.ocr.totals.tip;
+        if (state.ocr.summary.tip) {
+          state.bill.tip = state.ocr.summary.tip;
+          elements.billTip.value = state.ocr.summary.tip;
         }
-        if (state.ocr.totals.total) {
-          state.bill.actualTotal = state.ocr.totals.total;
-          elements.billActualTotal.value = state.ocr.totals.total;
+        if (state.ocr.summary.fee) {
+          state.bill.fee = state.ocr.summary.fee;
+          elements.billFee.value = state.ocr.summary.fee;
+        }
+        if (state.ocr.summary.total) {
+          state.bill.actualTotal = state.ocr.summary.total;
+          elements.billActualTotal.value = state.ocr.summary.total;
         }
 
         state.ocr.items = state.ocr.items.filter((item) => item.status !== "approved");
@@ -1097,31 +1114,40 @@
         state.ocr.imageUrl = event.target.value;
       });
       elements.ocrTax.addEventListener("input", (event) => {
-        state.ocr.totals.tax = event.target.value;
+        state.ocr.summary.tax = event.target.value;
         renderOcrSummary();
       });
       elements.ocrTip.addEventListener("input", (event) => {
-        state.ocr.totals.tip = event.target.value;
+        state.ocr.summary.tip = event.target.value;
+        renderOcrSummary();
+      });
+      elements.ocrFee.addEventListener("input", (event) => {
+        state.ocr.summary.fee = event.target.value;
         renderOcrSummary();
       });
       elements.ocrTotal.addEventListener("input", (event) => {
-        state.ocr.totals.total = event.target.value;
+        state.ocr.summary.total = event.target.value;
         renderOcrSummary();
       });
 
       elements.ocrTax.addEventListener("blur", (event) => {
         formatCurrencyInput(event.target);
-        state.ocr.totals.tax = event.target.value;
+        state.ocr.summary.tax = event.target.value;
         renderOcrSummary();
       });
       elements.ocrTip.addEventListener("blur", (event) => {
         formatCurrencyInput(event.target);
-        state.ocr.totals.tip = event.target.value;
+        state.ocr.summary.tip = event.target.value;
+        renderOcrSummary();
+      });
+      elements.ocrFee.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+        state.ocr.summary.fee = event.target.value;
         renderOcrSummary();
       });
       elements.ocrTotal.addEventListener("blur", (event) => {
         formatCurrencyInput(event.target);
-        state.ocr.totals.total = event.target.value;
+        state.ocr.summary.total = event.target.value;
         renderOcrSummary();
       });
 
