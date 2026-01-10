@@ -177,6 +177,68 @@
         font-size: 14px;
       }
 
+      .ocr-controls {
+        display: grid;
+        gap: 12px;
+      }
+
+      .ocr-table {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ocr-row {
+        display: grid;
+        grid-template-columns: 1.3fr 110px 110px 1fr;
+        gap: 8px;
+        align-items: center;
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+      }
+
+      .ocr-row.low-confidence {
+        border-color: #f59e0b;
+        background: #fffbeb;
+      }
+
+      .ocr-row.discarded {
+        opacity: 0.6;
+        background: #f3f4f6;
+      }
+
+      .confidence-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .confidence-pill.low {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .ocr-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .ocr-actions .button {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .ocr-summary {
+        display: grid;
+        gap: 8px;
+      }
+
       .summary-row strong {
         font-size: 16px;
       }
@@ -334,6 +396,62 @@
         </section>
 
         <section class="card">
+          <div class="summary-row">
+            <h2>OCR Import</h2>
+            <div class="pill">Staging</div>
+          </div>
+          <p class="section-label">Review receipt OCR before adding to the bill</p>
+
+          <div class="ocr-controls">
+            <div class="field">
+              <label>Upload or paste receipt image</label>
+              <input id="ocr-image" type="file" accept="image/*" />
+            </div>
+            <div class="field">
+              <label>Or paste image URL</label>
+              <input id="ocr-image-url" type="text" placeholder="https://..." />
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label>OCR Tax</label>
+                <input id="ocr-tax" type="text" placeholder="$0.00" />
+              </div>
+              <div class="field">
+                <label>OCR Tip</label>
+                <input id="ocr-tip" type="text" placeholder="$0.00" />
+              </div>
+              <div class="field">
+                <label>OCR Total</label>
+                <input id="ocr-total" type="text" placeholder="$0.00" />
+              </div>
+            </div>
+          </div>
+
+          <div class="ocr-table" id="ocr-list"></div>
+          <div class="empty-state" id="ocr-empty">No OCR line items yet.</div>
+
+          <div class="button-row">
+            <button class="button secondary" id="ocr-merge-duplicates">Merge duplicates</button>
+            <button class="button secondary" id="ocr-discard-all">Discard all</button>
+            <button class="button" id="ocr-apply">Apply to bill</button>
+          </div>
+
+          <div class="ocr-summary">
+            <div class="summary-row">
+              <span class="section-label">OCR subtotal</span>
+              <strong id="ocr-subtotal">$0.00</strong>
+            </div>
+            <div class="summary-row">
+              <span class="section-label">OCR total estimate</span>
+              <strong id="ocr-total-estimate">$0.00</strong>
+            </div>
+            <p class="helper-text">
+              Inline edits update staging totals before committing to the bill.
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
           <h2>Summary</h2>
           <div class="summary-row">
             <span>Subtotal</span>
@@ -395,6 +513,37 @@
           feeAllocation: "even",
           actualTotal: "",
         },
+        ocr: {
+          imageUrl: "",
+          totals: {
+            tax: "",
+            tip: "",
+            total: "",
+          },
+          items: [
+            {
+              id: createId(),
+              name: "Margherita Pizza",
+              price: "18.00",
+              confidence: 0.92,
+              status: "approved",
+            },
+            {
+              id: createId(),
+              name: "House Salad",
+              price: "9.50",
+              confidence: 0.64,
+              status: "pending",
+            },
+            {
+              id: createId(),
+              name: "Iced Tea",
+              price: "3.75",
+              confidence: 0.81,
+              status: "pending",
+            },
+          ],
+        },
         people: [],
       };
 
@@ -417,6 +566,18 @@
         summaryFee: document.querySelector("#summary-fee"),
         summaryTotal: document.querySelector("#summary-total"),
         personSummary: document.querySelector("#person-summary"),
+        ocrImage: document.querySelector("#ocr-image"),
+        ocrImageUrl: document.querySelector("#ocr-image-url"),
+        ocrTax: document.querySelector("#ocr-tax"),
+        ocrTip: document.querySelector("#ocr-tip"),
+        ocrTotal: document.querySelector("#ocr-total"),
+        ocrList: document.querySelector("#ocr-list"),
+        ocrEmpty: document.querySelector("#ocr-empty"),
+        ocrSubtotal: document.querySelector("#ocr-subtotal"),
+        ocrTotalEstimate: document.querySelector("#ocr-total-estimate"),
+        ocrApply: document.querySelector("#ocr-apply"),
+        ocrMergeDuplicates: document.querySelector("#ocr-merge-duplicates"),
+        ocrDiscardAll: document.querySelector("#ocr-discard-all"),
       };
 
       const parseCurrency = (value) => {
@@ -438,6 +599,20 @@
 
       const getItemsSubtotal = () =>
         state.people.reduce((total, person) => total + getPersonSubtotal(person), 0);
+
+      const getOcrSubtotal = () =>
+        state.ocr.items
+          .filter((item) => item.status !== "discarded")
+          .reduce((total, item) => total + parseCurrency(item.price), 0);
+
+      const getOcrTotalEstimate = () => {
+        const subtotal = getOcrSubtotal();
+        const tax = parseCurrency(state.ocr.totals.tax);
+        const tip = parseCurrency(state.ocr.totals.tip);
+        const totalOverride = parseCurrency(state.ocr.totals.total);
+        const computed = subtotal + tax + tip;
+        return totalOverride || computed;
+      };
 
       const getAllocationRatio = (person) => {
         const subtotal = getPersonSubtotal(person);
@@ -494,6 +669,13 @@
         elements.summaryFee.textContent = formatCurrency(fee);
         elements.summaryTotal.textContent = formatCurrency(total);
         elements.billTotal.textContent = formatCurrency(total);
+      };
+
+      const renderOcrSummary = () => {
+        const subtotal = getOcrSubtotal();
+        const estimate = getOcrTotalEstimate();
+        elements.ocrSubtotal.textContent = formatCurrency(subtotal);
+        elements.ocrTotalEstimate.textContent = formatCurrency(estimate);
       };
 
       const renderPersonSummary = () => {
@@ -604,10 +786,40 @@
         elements.peopleEmpty.style.display = state.people.length ? "none" : "block";
       };
 
+      const renderOcrItems = () => {
+        elements.ocrList.innerHTML = "";
+        state.ocr.items.forEach((item) => {
+          const row = document.createElement("div");
+          const isLowConfidence = item.confidence < 0.75;
+          row.className = `ocr-row${isLowConfidence ? " low-confidence" : ""}${
+            item.status === "discarded" ? " discarded" : ""
+          }`;
+          row.dataset.item = item.id;
+          const confidencePercent = Math.round(item.confidence * 100);
+          const confidenceClass = isLowConfidence ? "confidence-pill low" : "confidence-pill";
+          const approveLabel = item.status === "approved" ? "Approved" : "Approve";
+          const discardLabel = item.status === "discarded" ? "Discarded" : "Discard";
+          row.innerHTML = `
+            <input type="text" value="${item.name}" placeholder="Item name" data-item="${item.id}" data-field="name" />
+            <input type="text" value="${item.price}" placeholder="$0.00" data-item="${item.id}" data-field="price" />
+            <span class="${confidenceClass}">${confidencePercent}% conf.</span>
+            <div class="ocr-actions">
+              <button class="button secondary" data-item="${item.id}" data-action="approve">${approveLabel}</button>
+              <button class="button secondary" data-item="${item.id}" data-action="discard">${discardLabel}</button>
+              <button class="button secondary" data-item="${item.id}" data-action="reset">Reset</button>
+            </div>
+          `;
+          elements.ocrList.appendChild(row);
+        });
+        elements.ocrEmpty.style.display = state.ocr.items.length ? "none" : "block";
+      };
+
       const render = () => {
         renderPeople();
         renderSummary();
         renderPersonSummary();
+        renderOcrItems();
+        renderOcrSummary();
       };
 
       const updateBillField = (field, value) => {
@@ -661,6 +873,96 @@
         updatePersonCard(personId);
         renderSummary();
         renderPersonSummary();
+      };
+
+      const updateOcrItemField = (itemId, field, value) => {
+        const item = state.ocr.items.find((entry) => entry.id === itemId);
+        if (!item) return;
+        item[field] = value;
+        renderOcrSummary();
+      };
+
+      const setOcrItemStatus = (itemId, status) => {
+        const item = state.ocr.items.find((entry) => entry.id === itemId);
+        if (!item) return;
+        item.status = status;
+        renderOcrItems();
+        renderOcrSummary();
+      };
+
+      const mergeDuplicateOcrItems = () => {
+        const merged = new Map();
+        state.ocr.items.forEach((item) => {
+          const key = item.name.trim().toLowerCase();
+          if (!key) {
+            merged.set(item.id, { ...item });
+            return;
+          }
+          const existing = merged.get(key);
+          if (!existing) {
+            merged.set(key, { ...item });
+            return;
+          }
+          existing.price = formatCurrency(parseCurrency(existing.price) + parseCurrency(item.price));
+          existing.confidence = Math.max(existing.confidence, item.confidence);
+          if (item.status === "approved") {
+            existing.status = "approved";
+          }
+        });
+        state.ocr.items = Array.from(merged.values()).map((item) => ({
+          ...item,
+          price: item.price ? formatCurrency(parseCurrency(item.price)) : "",
+        }));
+        renderOcrItems();
+        renderOcrSummary();
+      };
+
+      const discardAllOcrItems = () => {
+        state.ocr.items = state.ocr.items.map((item) => ({
+          ...item,
+          status: "discarded",
+        }));
+        renderOcrItems();
+        renderOcrSummary();
+      };
+
+      const getOrCreateUnassignedPerson = () => {
+        let person = state.people.find((entry) => entry.name === "Unassigned");
+        if (!person) {
+          person = { id: createId(), name: "Unassigned", items: [] };
+          state.people.push(person);
+        }
+        return person;
+      };
+
+      const applyOcrToBill = () => {
+        const approvedItems = state.ocr.items.filter((item) => item.status === "approved");
+        if (approvedItems.length) {
+          const unassigned = getOrCreateUnassignedPerson();
+          approvedItems.forEach((item) => {
+            unassigned.items.push({
+              id: createId(),
+              name: item.name,
+              price: item.price ? formatCurrency(parseCurrency(item.price)) : "",
+            });
+          });
+        }
+
+        if (state.ocr.totals.tax) {
+          state.bill.tax = state.ocr.totals.tax;
+          elements.billTax.value = state.ocr.totals.tax;
+        }
+        if (state.ocr.totals.tip) {
+          state.bill.tip = state.ocr.totals.tip;
+          elements.billTip.value = state.ocr.totals.tip;
+        }
+        if (state.ocr.totals.total) {
+          state.bill.actualTotal = state.ocr.totals.total;
+          elements.billActualTotal.value = state.ocr.totals.total;
+        }
+
+        state.ocr.items = state.ocr.items.filter((item) => item.status !== "approved");
+        render();
       };
 
       const addPerson = () => {
@@ -736,6 +1038,45 @@
         }
       });
 
+      elements.ocrList.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        const itemId = target.dataset.item;
+        const field = target.dataset.field;
+        if (itemId && field) {
+          updateOcrItemField(itemId, field, target.value);
+        }
+      });
+
+      elements.ocrList.addEventListener("blur", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        if (target.dataset.field === "price") {
+          formatCurrencyInput(target);
+          const itemId = target.dataset.item;
+          if (itemId) {
+            updateOcrItemField(itemId, "price", target.value);
+          }
+        }
+      }, true);
+
+      elements.ocrList.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const action = target.dataset.action;
+        const itemId = target.dataset.item;
+        if (!action || !itemId) return;
+        if (action === "approve") {
+          setOcrItemStatus(itemId, "approved");
+        }
+        if (action === "discard") {
+          setOcrItemStatus(itemId, "discarded");
+        }
+        if (action === "reset") {
+          setOcrItemStatus(itemId, "pending");
+        }
+      });
+
       elements.billName.addEventListener("input", (event) => {
         updateBillField("name", event.target.value);
       });
@@ -750,6 +1091,38 @@
       });
       elements.billActualTotal.addEventListener("input", (event) => {
         updateBillField("actualTotal", event.target.value);
+      });
+
+      elements.ocrImageUrl.addEventListener("input", (event) => {
+        state.ocr.imageUrl = event.target.value;
+      });
+      elements.ocrTax.addEventListener("input", (event) => {
+        state.ocr.totals.tax = event.target.value;
+        renderOcrSummary();
+      });
+      elements.ocrTip.addEventListener("input", (event) => {
+        state.ocr.totals.tip = event.target.value;
+        renderOcrSummary();
+      });
+      elements.ocrTotal.addEventListener("input", (event) => {
+        state.ocr.totals.total = event.target.value;
+        renderOcrSummary();
+      });
+
+      elements.ocrTax.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+        state.ocr.totals.tax = event.target.value;
+        renderOcrSummary();
+      });
+      elements.ocrTip.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+        state.ocr.totals.tip = event.target.value;
+        renderOcrSummary();
+      });
+      elements.ocrTotal.addEventListener("blur", (event) => {
+        formatCurrencyInput(event.target);
+        state.ocr.totals.total = event.target.value;
+        renderOcrSummary();
       });
 
       elements.billTax.addEventListener("blur", (event) => {
@@ -781,6 +1154,10 @@
       elements.billTipMode.addEventListener("change", (event) => {
         updateBillField("tipMode", event.target.value);
       });
+
+      elements.ocrMergeDuplicates.addEventListener("click", mergeDuplicateOcrItems);
+      elements.ocrDiscardAll.addEventListener("click", discardAllOcrItems);
+      elements.ocrApply.addEventListener("click", applyOcrToBill);
 
       addPerson();
       addPerson();
