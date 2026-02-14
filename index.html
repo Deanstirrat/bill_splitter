@@ -599,6 +599,20 @@
         renderPersonSummary();
       };
 
+      const syncPersonCardMeta = (personId) => {
+        const person = state.people.find((entry) => entry.id === personId);
+        const card = elements.peopleList.querySelector(`[data-person="${personId}"]`);
+        if (!person || !card) return;
+        const title = card.querySelector("header strong");
+        const subtotal = card.querySelector("header .pill");
+        if (title) {
+          title.textContent = person.name || "Untitled person";
+        }
+        if (subtotal) {
+          subtotal.textContent = formatCurrency(getPersonSubtotal(person));
+        }
+      };
+
       const updateBillField = (field, value) => {
         state.bill[field] = value;
         renderSummary();
@@ -659,7 +673,7 @@
           const person = state.people.find((entry) => entry.id === personId);
           if (person) {
             person.name = target.value;
-            renderPeople();
+            syncPersonCardMeta(personId);
             renderPersonSummary();
           }
           return;
@@ -672,7 +686,7 @@
           if (!item) return;
           item[field] = target.value;
           renderSummary();
-          renderPeople();
+          syncPersonCardMeta(personId);
           renderPersonSummary();
         }
       });
