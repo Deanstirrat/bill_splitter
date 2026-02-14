@@ -8,8 +8,8 @@
       :root {
         color-scheme: light;
         font-family: "Inter", "Segoe UI", sans-serif;
-        background: #f5f6f8;
-        color: #1f2937;
+        background: #f3f4f6;
+        color: #111827;
       }
 
       * {
@@ -19,49 +19,49 @@
       body {
         margin: 0;
         padding: 32px;
+        background: radial-gradient(circle at top, #ffffff 0%, #f3f4f6 55%);
       }
 
       .page {
-        max-width: 1200px;
+        max-width: 1100px;
         margin: 0 auto;
         display: grid;
-        gap: 24px;
+        gap: 20px;
       }
 
       header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         padding: 24px;
-        background: white;
+        background: #ffffff;
         border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
       }
 
       header h1 {
         margin: 0;
-        font-size: 24px;
+        font-size: 28px;
       }
 
       header p {
-        margin: 6px 0 0;
+        margin: 8px 0 0;
         color: #6b7280;
       }
 
       .layout {
         display: grid;
-        grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr) minmax(280px, 1fr);
-        gap: 24px;
+        grid-template-columns: minmax(300px, 1fr) minmax(320px, 1fr) minmax(320px, 1fr);
+        gap: 20px;
       }
 
       .card {
-        background: white;
+        background: #fff;
         border-radius: 16px;
         padding: 20px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 14px;
       }
 
       .card h2 {
@@ -101,11 +101,19 @@
 
       input,
       select {
-        padding: 8px 12px;
+        width: 100%;
+        padding: 10px 12px;
         border-radius: 10px;
         border: 1px solid #d1d5db;
         background: #f9fafb;
         font-size: 14px;
+      }
+
+      input:focus,
+      select:focus,
+      .button:focus {
+        outline: 2px solid #93c5fd;
+        outline-offset: 1px;
       }
 
       .button-row {
@@ -114,7 +122,7 @@
       }
 
       .button {
-        padding: 10px 14px;
+        padding: 9px 14px;
         border-radius: 10px;
         border: none;
         font-weight: 600;
@@ -125,22 +133,25 @@
 
       .button.secondary {
         background: #e5e7eb;
-        color: #1f2937;
+        color: #111827;
       }
 
       .pill {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        background: #f3f4f6;
+        padding: 6px 10px;
         border-radius: 999px;
-        font-size: 13px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 600;
       }
 
-      .people-list {
+      .people-list,
+      .items,
+      .person-breakdown {
         display: grid;
-        gap: 12px;
+        gap: 10px;
       }
 
       .person-card {
@@ -148,24 +159,23 @@
         border-radius: 12px;
         padding: 12px;
         display: grid;
-        gap: 8px;
+        gap: 10px;
+        background: #fcfcfd;
       }
 
       .person-card header {
         padding: 0;
         box-shadow: none;
+        border: none;
         background: transparent;
+        display: flex;
+        align-items: center;
         justify-content: space-between;
-      }
-
-      .items {
-        display: grid;
-        gap: 8px;
       }
 
       .item-row {
         display: grid;
-        grid-template-columns: 1fr 90px auto;
+        grid-template-columns: 1fr 110px auto;
         gap: 8px;
         align-items: center;
       }
@@ -174,69 +184,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 8px;
         font-size: 14px;
-      }
-
-      .ocr-controls {
-        display: grid;
-        gap: 12px;
-      }
-
-      .ocr-table {
-        display: grid;
-        gap: 8px;
-      }
-
-      .ocr-row {
-        display: grid;
-        grid-template-columns: 1.3fr 110px 110px 1fr;
-        gap: 8px;
-        align-items: center;
-        padding: 8px;
-        border-radius: 12px;
-        border: 1px solid #e5e7eb;
-      }
-
-      .ocr-row.low-confidence {
-        border-color: #f59e0b;
-        background: #fffbeb;
-      }
-
-      .ocr-row.discarded {
-        opacity: 0.6;
-        background: #f3f4f6;
-      }
-
-      .confidence-pill {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 4px 8px;
-        border-radius: 999px;
-        background: #e5e7eb;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .confidence-pill.low {
-        background: #fef3c7;
-        color: #92400e;
-      }
-
-      .ocr-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-
-      .ocr-actions .button {
-        padding: 6px 10px;
-        font-size: 12px;
-      }
-
-      .ocr-summary {
-        display: grid;
-        gap: 8px;
       }
 
       .summary-row strong {
@@ -245,11 +194,11 @@
 
       .validation-panel {
         background: #111827;
-        color: white;
+        color: #ffffff;
         border-radius: 14px;
-        padding: 16px;
+        padding: 14px;
         display: grid;
-        gap: 12px;
+        gap: 10px;
       }
 
       .validation-panel .summary-row {
@@ -257,8 +206,6 @@
       }
 
       .person-breakdown {
-        display: grid;
-        gap: 6px;
         padding-bottom: 8px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
@@ -268,29 +215,30 @@
         padding-bottom: 0;
       }
 
-      .discrepancy {
-        padding: 10px 12px;
-        border-radius: 10px;
-        background: #fef3c7;
-        color: #92400e;
-        font-weight: 600;
-      }
-
-      .discrepancy.warning {
-        background: #fee2e2;
-        color: #b91c1c;
-      }
-
-      .balance-note {
+      .balance-note,
+      .helper-text {
         font-size: 12px;
-        color: #9ca3af;
+        color: #6b7280;
         margin: 0;
+      }
+
+      .validation-panel .balance-note {
+        color: #9ca3af;
+      }
+
+      .empty-state {
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px dashed #d1d5db;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
       }
 
       .footer {
         display: flex;
         justify-content: flex-end;
-        gap: 12px;
+        gap: 10px;
       }
 
       .button.venmo {
@@ -299,25 +247,9 @@
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        justify-content: center;
       }
 
-      .helper-text {
-        font-size: 12px;
-        color: #6b7280;
-        margin: 0;
-      }
-
-      .empty-state {
-        padding: 16px;
-        border-radius: 12px;
-        border: 1px dashed #d1d5db;
-        text-align: center;
-        color: #6b7280;
-        font-size: 14px;
-      }
-
-      @media (max-width: 1000px) {
+      @media (max-width: 1100px) {
         .layout {
           grid-template-columns: 1fr;
         }
@@ -327,11 +259,8 @@
   <body>
     <div class="page">
       <header>
-        <div>
-          <h1>Bill Splitter</h1>
-          <p>Inline editing with immediate totals and reconciliation.</p>
-        </div>
-        <div class="pill">Last updated 2 minutes ago</div>
+        <h1>Bill Splitter</h1>
+        <p>Split shared bills quickly with live totals and per-person payment links.</p>
       </header>
 
       <div class="layout">
@@ -386,77 +315,11 @@
         </section>
 
         <section class="card">
-          <div class="summary-row">
-            <h2>People</h2>
-          </div>
+          <h2>People</h2>
           <p class="section-label">Inline editing for names and item prices</p>
           <div class="people-list" id="people-list"></div>
           <div class="empty-state" id="people-empty">Add someone to start entering items.</div>
           <button class="button" id="add-person">+ Add person</button>
-        </section>
-
-        <section class="card">
-          <div class="summary-row">
-            <h2>OCR Import</h2>
-            <div class="pill">Staging</div>
-          </div>
-          <p class="section-label">Review receipt OCR before adding to the bill</p>
-
-          <div class="ocr-controls">
-            <div class="field">
-              <label>Upload or paste receipt image</label>
-              <input id="ocr-image" type="file" accept="image/*" />
-            </div>
-            <div class="field">
-              <label>Or paste image URL</label>
-              <input id="ocr-image-url" type="text" placeholder="https://..." />
-            </div>
-            <div class="field-grid">
-              <div class="field">
-                <label>OCR Tax</label>
-                <input id="ocr-tax" type="text" placeholder="$0.00" />
-              </div>
-              <div class="field">
-                <label>OCR Tip</label>
-                <input id="ocr-tip" type="text" placeholder="$0.00" />
-              </div>
-              <div class="field">
-                <label>OCR Fees</label>
-                <input id="ocr-fee" type="text" placeholder="$0.00" />
-              </div>
-              <div class="field">
-                <label>OCR Total</label>
-                <input id="ocr-total" type="text" placeholder="$0.00" />
-              </div>
-            </div>
-          </div>
-
-          <div class="ocr-table" id="ocr-list"></div>
-          <div class="empty-state" id="ocr-empty">No OCR line items yet.</div>
-
-          <div class="button-row">
-            <button class="button secondary" id="ocr-merge-duplicates">Merge duplicates</button>
-            <button class="button secondary" id="ocr-discard-all">Discard all</button>
-            <button class="button" id="ocr-apply">Apply to bill</button>
-          </div>
-
-          <div class="ocr-summary">
-            <div class="summary-row">
-              <span class="section-label">OCR subtotal</span>
-              <strong id="ocr-subtotal">$0.00</strong>
-            </div>
-            <div class="summary-row">
-              <span class="section-label">OCR fees</span>
-              <strong id="ocr-fee-total">$0.00</strong>
-            </div>
-            <div class="summary-row">
-              <span class="section-label">OCR total estimate</span>
-              <strong id="ocr-total-estimate">$0.00</strong>
-            </div>
-            <p class="helper-text">
-              Inline edits update staging totals before committing to the bill.
-            </p>
-          </div>
         </section>
 
         <section class="card">
@@ -483,9 +346,7 @@
           </div>
 
           <div class="validation-panel">
-            <p class="balance-note">
-              Track item subtotals here. Validation and reconciliation arrive in milestone 2.
-            </p>
+            <p class="balance-note">Per-person totals update instantly as values change.</p>
             <div id="person-summary"></div>
           </div>
 
@@ -496,6 +357,7 @@
         </section>
       </div>
     </div>
+
     <script>
       const currencyFormatter = new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -521,38 +383,6 @@
           feeAllocation: "even",
           actualTotal: "",
         },
-        ocr: {
-          imageUrl: "",
-          summary: {
-            tax: "",
-            tip: "",
-            fee: "",
-            total: "",
-          },
-          items: [
-            {
-              id: createId(),
-              name: "Margherita Pizza",
-              price: "18.00",
-              confidence: 0.92,
-              status: "approved",
-            },
-            {
-              id: createId(),
-              name: "House Salad",
-              price: "9.50",
-              confidence: 0.64,
-              status: "pending",
-            },
-            {
-              id: createId(),
-              name: "Iced Tea",
-              price: "3.75",
-              confidence: 0.81,
-              status: "pending",
-            },
-          ],
-        },
         people: [],
       };
 
@@ -575,20 +405,6 @@
         summaryFee: document.querySelector("#summary-fee"),
         summaryTotal: document.querySelector("#summary-total"),
         personSummary: document.querySelector("#person-summary"),
-        ocrImage: document.querySelector("#ocr-image"),
-        ocrImageUrl: document.querySelector("#ocr-image-url"),
-        ocrTax: document.querySelector("#ocr-tax"),
-        ocrTip: document.querySelector("#ocr-tip"),
-        ocrFee: document.querySelector("#ocr-fee"),
-        ocrTotal: document.querySelector("#ocr-total"),
-        ocrList: document.querySelector("#ocr-list"),
-        ocrEmpty: document.querySelector("#ocr-empty"),
-        ocrSubtotal: document.querySelector("#ocr-subtotal"),
-        ocrFeeTotal: document.querySelector("#ocr-fee-total"),
-        ocrTotalEstimate: document.querySelector("#ocr-total-estimate"),
-        ocrApply: document.querySelector("#ocr-apply"),
-        ocrMergeDuplicates: document.querySelector("#ocr-merge-duplicates"),
-        ocrDiscardAll: document.querySelector("#ocr-discard-all"),
       };
 
       const parseCurrency = (value) => {
@@ -611,21 +427,6 @@
       const getItemsSubtotal = () =>
         state.people.reduce((total, person) => total + getPersonSubtotal(person), 0);
 
-      const getOcrSubtotal = () =>
-        state.ocr.items
-          .filter((item) => item.status !== "discarded")
-          .reduce((total, item) => total + parseCurrency(item.price), 0);
-
-      const getOcrTotalEstimate = () => {
-        const subtotal = getOcrSubtotal();
-        const tax = parseCurrency(state.ocr.summary.tax);
-        const tip = parseCurrency(state.ocr.summary.tip);
-        const fee = parseCurrency(state.ocr.summary.fee);
-        const totalOverride = parseCurrency(state.ocr.summary.total);
-        const computed = subtotal + tax + tip + fee;
-        return totalOverride || computed;
-      };
-
       const getAllocationRatio = (person) => {
         const subtotal = getPersonSubtotal(person);
         const totalSubtotal = getItemsSubtotal();
@@ -640,20 +441,6 @@
         return getAllocationRatio(person);
       };
 
-      const getPersonTotals = (person) => {
-        const subtotal = getPersonSubtotal(person);
-        const ratio = getAllocationRatio(person);
-        const feeRatio = getFeeAllocationRatio(person);
-        const tax = getBillTaxAmount();
-        const tip = getBillTipAmount();
-        const fee = parseCurrency(state.bill.fee);
-        const taxShare = tax * ratio;
-        const tipShare = tip * ratio;
-        const feeShare = fee * feeRatio;
-        const total = subtotal + taxShare + tipShare + feeShare;
-        return { subtotal, taxShare, tipShare, feeShare, total };
-      };
-
       const getBillTaxAmount = () => {
         if (state.bill.taxMode === "percent") {
           return getItemsSubtotal() * parsePercent(state.bill.tax);
@@ -666,6 +453,20 @@
           return getItemsSubtotal() * parsePercent(state.bill.tip);
         }
         return parseCurrency(state.bill.tip);
+      };
+
+      const getPersonTotals = (person) => {
+        const subtotal = getPersonSubtotal(person);
+        const ratio = getAllocationRatio(person);
+        const feeRatio = getFeeAllocationRatio(person);
+        const tax = getBillTaxAmount();
+        const tip = getBillTipAmount();
+        const fee = parseCurrency(state.bill.fee);
+        const taxShare = tax * ratio;
+        const tipShare = tip * ratio;
+        const feeShare = fee * feeRatio;
+        const total = subtotal + taxShare + tipShare + feeShare;
+        return { subtotal, taxShare, tipShare, feeShare, total };
       };
 
       const renderSummary = () => {
@@ -683,21 +484,16 @@
         elements.billTotal.textContent = formatCurrency(total);
       };
 
-      const renderOcrSummary = () => {
-        const subtotal = getOcrSubtotal();
-        const estimate = getOcrTotalEstimate();
-        elements.ocrSubtotal.textContent = formatCurrency(subtotal);
-        elements.ocrFeeTotal.textContent = formatCurrency(parseCurrency(state.ocr.summary.fee));
-        elements.ocrTotalEstimate.textContent = formatCurrency(estimate);
-      };
-
       const renderPersonSummary = () => {
         elements.personSummary.innerHTML = "";
         if (!state.people.length) {
-          elements.personSummary.innerHTML =
-            '<p class="balance-note">No people yet. Add someone to see their subtotal.</p>';
+          const row = document.createElement("div");
+          row.className = "summary-row";
+          row.innerHTML = "<span>No people added yet.</span>";
+          elements.personSummary.appendChild(row);
           return;
         }
+
         state.people.forEach((person) => {
           const totals = getPersonTotals(person);
           const name = person.name || "Untitled";
@@ -749,15 +545,20 @@
           card.dataset.person = person.id;
 
           const header = document.createElement("header");
-          const totals = getPersonTotals(person);
           header.innerHTML = `
             <strong>${person.name || "Untitled person"}</strong>
-            <span class="pill">${formatCurrency(totals.subtotal)}</span>
+            <span class="pill">${formatCurrency(getPersonSubtotal(person))}</span>
+          `;
+
+          const nameField = document.createElement("div");
+          nameField.className = "field";
+          nameField.innerHTML = `
+            <label>Person name</label>
+            <input type="text" value="${person.name}" data-person="${person.id}" data-field="person-name" />
           `;
 
           const items = document.createElement("div");
           items.className = "items";
-
           person.items.forEach((item) => {
             const row = document.createElement("div");
             row.className = "item-row";
@@ -776,13 +577,6 @@
           addItemButton.dataset.action = "add-item";
           items.appendChild(addItemButton);
 
-          const nameField = document.createElement("div");
-          nameField.className = "field";
-          nameField.innerHTML = `
-            <label>Person name</label>
-            <input type="text" value="${person.name}" data-person="${person.id}" data-field="person-name" />
-          `;
-
           const removeButton = document.createElement("button");
           removeButton.className = "button secondary";
           removeButton.textContent = "Remove person";
@@ -799,63 +593,16 @@
         elements.peopleEmpty.style.display = state.people.length ? "none" : "block";
       };
 
-      const renderOcrItems = () => {
-        elements.ocrList.innerHTML = "";
-        state.ocr.items.forEach((item) => {
-          const row = document.createElement("div");
-          const isLowConfidence = item.confidence < 0.75;
-          row.className = `ocr-row${isLowConfidence ? " low-confidence" : ""}${
-            item.status === "discarded" ? " discarded" : ""
-          }`;
-          row.dataset.item = item.id;
-          const confidencePercent = Math.round(item.confidence * 100);
-          const confidenceClass = isLowConfidence ? "confidence-pill low" : "confidence-pill";
-          const approveLabel = item.status === "approved" ? "Approved" : "Approve";
-          const discardLabel = item.status === "discarded" ? "Discarded" : "Discard";
-          row.innerHTML = `
-            <input type="text" value="${item.name}" placeholder="Item name" data-item="${item.id}" data-field="name" />
-            <input type="text" value="${item.price}" placeholder="$0.00" data-item="${item.id}" data-field="price" />
-            <span class="${confidenceClass}">${confidencePercent}% conf.</span>
-            <div class="ocr-actions">
-              <button class="button secondary" data-item="${item.id}" data-action="approve">${approveLabel}</button>
-              <button class="button secondary" data-item="${item.id}" data-action="discard">${discardLabel}</button>
-              <button class="button secondary" data-item="${item.id}" data-action="reset">Reset</button>
-            </div>
-          `;
-          elements.ocrList.appendChild(row);
-        });
-        elements.ocrEmpty.style.display = state.ocr.items.length ? "none" : "block";
-      };
-
       const render = () => {
         renderPeople();
         renderSummary();
         renderPersonSummary();
-        renderOcrItems();
-        renderOcrSummary();
       };
 
       const updateBillField = (field, value) => {
         state.bill[field] = value;
         renderSummary();
         renderPersonSummary();
-      };
-
-      const updatePersonCard = (personId) => {
-        const card = elements.peopleList.querySelector(
-          `.person-card[data-person="${personId}"]`
-        );
-        if (!card) return;
-        const person = state.people.find((entry) => entry.id === personId);
-        if (!person) return;
-        const headerName = card.querySelector("header strong");
-        const headerPill = card.querySelector("header .pill");
-        if (headerName) {
-          headerName.textContent = person.name || "Untitled person";
-        }
-        if (headerPill) {
-          headerPill.textContent = formatCurrency(getPersonTotals(person).subtotal);
-        }
       };
 
       const formatCurrencyInput = (input) => {
@@ -866,120 +613,6 @@
       const formatPercentInput = (input) => {
         const numeric = Number.parseFloat(input.value.replace(/[^0-9.-]/g, ""));
         input.value = Number.isNaN(numeric) ? "" : `${numeric}%`;
-      };
-
-      const updatePersonName = (personId, value) => {
-        const person = state.people.find((entry) => entry.id === personId);
-        if (person) {
-          person.name = value;
-          updatePersonCard(personId);
-          renderPersonSummary();
-        }
-      };
-
-      const updateItemField = (personId, itemId, field, value) => {
-        const person = state.people.find((entry) => entry.id === personId);
-        if (!person) return;
-        const item = person.items.find((entry) => entry.id === itemId);
-        if (!item) return;
-        item[field] = value;
-        updatePersonCard(personId);
-        renderSummary();
-        renderPersonSummary();
-      };
-
-      const updateOcrItemField = (itemId, field, value) => {
-        const item = state.ocr.items.find((entry) => entry.id === itemId);
-        if (!item) return;
-        item[field] = value;
-        renderOcrSummary();
-      };
-
-      const setOcrItemStatus = (itemId, status) => {
-        const item = state.ocr.items.find((entry) => entry.id === itemId);
-        if (!item) return;
-        item.status = status;
-        renderOcrItems();
-        renderOcrSummary();
-      };
-
-      const mergeDuplicateOcrItems = () => {
-        const merged = new Map();
-        state.ocr.items.forEach((item) => {
-          const key = item.name.trim().toLowerCase();
-          if (!key) {
-            merged.set(item.id, { ...item });
-            return;
-          }
-          const existing = merged.get(key);
-          if (!existing) {
-            merged.set(key, { ...item });
-            return;
-          }
-          existing.price = formatCurrency(parseCurrency(existing.price) + parseCurrency(item.price));
-          existing.confidence = Math.max(existing.confidence, item.confidence);
-          if (item.status === "approved") {
-            existing.status = "approved";
-          }
-        });
-        state.ocr.items = Array.from(merged.values()).map((item) => ({
-          ...item,
-          price: item.price ? formatCurrency(parseCurrency(item.price)) : "",
-        }));
-        renderOcrItems();
-        renderOcrSummary();
-      };
-
-      const discardAllOcrItems = () => {
-        state.ocr.items = state.ocr.items.map((item) => ({
-          ...item,
-          status: "discarded",
-        }));
-        renderOcrItems();
-        renderOcrSummary();
-      };
-
-      const getOrCreateUnassignedPerson = () => {
-        let person = state.people.find((entry) => entry.name === "Unassigned");
-        if (!person) {
-          person = { id: createId(), name: "Unassigned", items: [] };
-          state.people.push(person);
-        }
-        return person;
-      };
-
-      const applyOcrToBill = () => {
-        const approvedItems = state.ocr.items.filter((item) => item.status === "approved");
-        if (approvedItems.length) {
-          const unassigned = getOrCreateUnassignedPerson();
-          approvedItems.forEach((item) => {
-            unassigned.items.push({
-              id: createId(),
-              name: item.name,
-              price: item.price ? formatCurrency(parseCurrency(item.price)) : "",
-            });
-          });
-        }
-
-        if (state.ocr.summary.tax) {
-          state.bill.tax = state.ocr.summary.tax;
-          elements.billTax.value = state.ocr.summary.tax;
-        }
-        if (state.ocr.summary.tip) {
-          state.bill.tip = state.ocr.summary.tip;
-          elements.billTip.value = state.ocr.summary.tip;
-        }
-        if (state.ocr.summary.fee) {
-          state.bill.fee = state.ocr.summary.fee;
-          elements.billFee.value = state.ocr.summary.fee;
-        }
-        if (state.ocr.summary.total) {
-          state.bill.actualTotal = state.ocr.summary.total;
-          elements.billActualTotal.value = state.ocr.summary.total;
-        }
-
-        state.ocr.items = state.ocr.items.filter((item) => item.status !== "approved");
-        render();
       };
 
       const addPerson = () => {
@@ -1021,21 +654,51 @@
         const personId = target.dataset.person;
         const itemId = target.dataset.item;
         const field = target.dataset.field;
+
         if (field === "person-name" && personId) {
-          updatePersonName(personId, target.value);
+          const person = state.people.find((entry) => entry.id === personId);
+          if (person) {
+            person.name = target.value;
+            renderPeople();
+            renderPersonSummary();
+          }
+          return;
         }
+
         if (personId && itemId && field) {
-          updateItemField(personId, itemId, field, target.value);
+          const person = state.people.find((entry) => entry.id === personId);
+          if (!person) return;
+          const item = person.items.find((entry) => entry.id === itemId);
+          if (!item) return;
+          item[field] = target.value;
+          renderSummary();
+          renderPeople();
+          renderPersonSummary();
         }
       });
 
-      elements.peopleList.addEventListener("blur", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) return;
-        if (target.dataset.field === "price") {
-          formatCurrencyInput(target);
-        }
-      }, true);
+      elements.peopleList.addEventListener(
+        "blur",
+        (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLInputElement)) return;
+          if (target.dataset.field === "price") {
+            formatCurrencyInput(target);
+            const personId = target.dataset.person;
+            const itemId = target.dataset.item;
+            if (!personId || !itemId) return;
+            const person = state.people.find((entry) => entry.id === personId);
+            if (!person) return;
+            const item = person.items.find((entry) => entry.id === itemId);
+            if (!item) return;
+            item.price = target.value;
+            renderSummary();
+            renderPeople();
+            renderPersonSummary();
+          }
+        },
+        true
+      );
 
       elements.peopleList.addEventListener("click", (event) => {
         const target = event.target;
@@ -1044,112 +707,17 @@
         const personId = target.dataset.person;
         const itemId = target.dataset.item;
         if (!action || !personId) return;
-        if (action === "add-item") {
-          addItem(personId);
-        }
-        if (action === "remove-item" && itemId) {
-          removeItem(personId, itemId);
-        }
-        if (action === "remove-person") {
-          removePerson(personId);
-        }
+
+        if (action === "add-item") addItem(personId);
+        if (action === "remove-item" && itemId) removeItem(personId, itemId);
+        if (action === "remove-person") removePerson(personId);
       });
 
-      elements.ocrList.addEventListener("input", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) return;
-        const itemId = target.dataset.item;
-        const field = target.dataset.field;
-        if (itemId && field) {
-          updateOcrItemField(itemId, field, target.value);
-        }
-      });
-
-      elements.ocrList.addEventListener("blur", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) return;
-        if (target.dataset.field === "price") {
-          formatCurrencyInput(target);
-          const itemId = target.dataset.item;
-          if (itemId) {
-            updateOcrItemField(itemId, "price", target.value);
-          }
-        }
-      }, true);
-
-      elements.ocrList.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLElement)) return;
-        const action = target.dataset.action;
-        const itemId = target.dataset.item;
-        if (!action || !itemId) return;
-        if (action === "approve") {
-          setOcrItemStatus(itemId, "approved");
-        }
-        if (action === "discard") {
-          setOcrItemStatus(itemId, "discarded");
-        }
-        if (action === "reset") {
-          setOcrItemStatus(itemId, "pending");
-        }
-      });
-
-      elements.billName.addEventListener("input", (event) => {
-        updateBillField("name", event.target.value);
-      });
-      elements.billTax.addEventListener("input", (event) => {
-        updateBillField("tax", event.target.value);
-      });
-      elements.billTip.addEventListener("input", (event) => {
-        updateBillField("tip", event.target.value);
-      });
-      elements.billFee.addEventListener("input", (event) => {
-        updateBillField("fee", event.target.value);
-      });
-      elements.billActualTotal.addEventListener("input", (event) => {
-        updateBillField("actualTotal", event.target.value);
-      });
-
-      elements.ocrImageUrl.addEventListener("input", (event) => {
-        state.ocr.imageUrl = event.target.value;
-      });
-      elements.ocrTax.addEventListener("input", (event) => {
-        state.ocr.summary.tax = event.target.value;
-        renderOcrSummary();
-      });
-      elements.ocrTip.addEventListener("input", (event) => {
-        state.ocr.summary.tip = event.target.value;
-        renderOcrSummary();
-      });
-      elements.ocrFee.addEventListener("input", (event) => {
-        state.ocr.summary.fee = event.target.value;
-        renderOcrSummary();
-      });
-      elements.ocrTotal.addEventListener("input", (event) => {
-        state.ocr.summary.total = event.target.value;
-        renderOcrSummary();
-      });
-
-      elements.ocrTax.addEventListener("blur", (event) => {
-        formatCurrencyInput(event.target);
-        state.ocr.summary.tax = event.target.value;
-        renderOcrSummary();
-      });
-      elements.ocrTip.addEventListener("blur", (event) => {
-        formatCurrencyInput(event.target);
-        state.ocr.summary.tip = event.target.value;
-        renderOcrSummary();
-      });
-      elements.ocrFee.addEventListener("blur", (event) => {
-        formatCurrencyInput(event.target);
-        state.ocr.summary.fee = event.target.value;
-        renderOcrSummary();
-      });
-      elements.ocrTotal.addEventListener("blur", (event) => {
-        formatCurrencyInput(event.target);
-        state.ocr.summary.total = event.target.value;
-        renderOcrSummary();
-      });
+      elements.billName.addEventListener("input", (event) => updateBillField("name", event.target.value));
+      elements.billTax.addEventListener("input", (event) => updateBillField("tax", event.target.value));
+      elements.billTip.addEventListener("input", (event) => updateBillField("tip", event.target.value));
+      elements.billFee.addEventListener("input", (event) => updateBillField("fee", event.target.value));
+      elements.billActualTotal.addEventListener("input", (event) => updateBillField("actualTotal", event.target.value));
 
       elements.billTax.addEventListener("blur", (event) => {
         if (state.bill.taxMode === "percent") {
@@ -1158,6 +726,7 @@
         }
         formatCurrencyInput(event.target);
       });
+
       elements.billTip.addEventListener("blur", (event) => {
         if (state.bill.tipMode === "percent") {
           formatPercentInput(event.target);
@@ -1165,25 +734,12 @@
         }
         formatCurrencyInput(event.target);
       });
-      elements.billFee.addEventListener("blur", (event) => {
-        formatCurrencyInput(event.target);
-      });
-      elements.billActualTotal.addEventListener("blur", (event) => {
-        formatCurrencyInput(event.target);
-      });
-      elements.billFeeAllocation.addEventListener("change", (event) => {
-        updateBillField("feeAllocation", event.target.value);
-      });
-      elements.billTaxMode.addEventListener("change", (event) => {
-        updateBillField("taxMode", event.target.value);
-      });
-      elements.billTipMode.addEventListener("change", (event) => {
-        updateBillField("tipMode", event.target.value);
-      });
 
-      elements.ocrMergeDuplicates.addEventListener("click", mergeDuplicateOcrItems);
-      elements.ocrDiscardAll.addEventListener("click", discardAllOcrItems);
-      elements.ocrApply.addEventListener("click", applyOcrToBill);
+      elements.billFee.addEventListener("blur", (event) => formatCurrencyInput(event.target));
+      elements.billActualTotal.addEventListener("blur", (event) => formatCurrencyInput(event.target));
+      elements.billFeeAllocation.addEventListener("change", (event) => updateBillField("feeAllocation", event.target.value));
+      elements.billTaxMode.addEventListener("change", (event) => updateBillField("taxMode", event.target.value));
+      elements.billTipMode.addEventListener("change", (event) => updateBillField("tipMode", event.target.value));
 
       addPerson();
       addPerson();
