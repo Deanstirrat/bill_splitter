@@ -249,6 +249,129 @@
         align-items: center;
       }
 
+      .import-section {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .import-section h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .import-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      @media (max-width: 600px) {
+        .import-inputs {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .import-inputs .field-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .import-inputs .field-row input {
+        flex: 1;
+      }
+
+      .import-spinner {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #6b7280;
+      }
+
+      .import-spinner.visible {
+        display: flex;
+      }
+
+      .import-spinner .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2563eb;
+        animation: pulse 1s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+
+      .import-error {
+        display: none;
+        color: #dc2626;
+        font-size: 13px;
+      }
+
+      .import-error.visible {
+        display: block;
+      }
+
+      .staging-area {
+        display: none;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 14px;
+        background: #fcfcfd;
+      }
+
+      .staging-area.visible {
+        display: block;
+      }
+
+      .staging-area h3 {
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+
+      .staging-items {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .staging-item {
+        display: grid;
+        grid-template-columns: auto 1fr 90px;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .staging-item input[type="checkbox"] {
+        width: auto;
+      }
+
+      .staging-meta {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 12px;
+        font-size: 13px;
+      }
+
+      .staging-meta label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .staging-meta input[type="checkbox"] {
+        width: auto;
+      }
+
       @media (max-width: 1100px) {
         .layout {
           grid-template-columns: 1fr;
@@ -262,6 +385,38 @@
         <h1>Bill Splitter</h1>
         <p>Split shared bills quickly with live totals and per-person payment links.</p>
       </header>
+
+      <section class="import-section">
+        <h2>Import Receipt</h2>
+        <p class="section-label">Paste a receipt URL or upload a photo</p>
+        <div class="import-inputs">
+          <div class="field">
+            <label>Receipt URL</label>
+            <div class="field-row">
+              <input id="import-url" type="url" placeholder="https://squareup.com/receipt/..." />
+              <button class="button" id="import-url-btn">Import</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Receipt photo</label>
+            <input id="import-photo" type="file" accept="image/*" capture="environment" />
+          </div>
+        </div>
+        <div class="import-spinner" id="import-spinner">
+          <div class="dot"></div>
+          <span>Extracting receipt data...</span>
+        </div>
+        <div class="import-error" id="import-error"></div>
+        <div class="staging-area" id="staging-area">
+          <h3 id="staging-merchant">Extracted Items</h3>
+          <div class="staging-items" id="staging-items"></div>
+          <div class="staging-meta" id="staging-meta"></div>
+          <div class="button-row">
+            <button class="button" id="staging-add">Add to bill</button>
+            <button class="button secondary" id="staging-discard">Discard</button>
+          </div>
+        </div>
+      </section>
 
       <div class="layout">
         <section class="card">
@@ -757,6 +912,161 @@
 
       addPerson();
       addPerson();
+
+      // --- Import Receipt ---
+      const importUrl = document.querySelector("#import-url");
+      const importUrlBtn = document.querySelector("#import-url-btn");
+      const importPhoto = document.querySelector("#import-photo");
+      const importSpinner = document.querySelector("#import-spinner");
+      const importError = document.querySelector("#import-error");
+      const stagingArea = document.querySelector("#staging-area");
+      const stagingMerchant = document.querySelector("#staging-merchant");
+      const stagingItems = document.querySelector("#staging-items");
+      const stagingMeta = document.querySelector("#staging-meta");
+      const stagingAdd = document.querySelector("#staging-add");
+      const stagingDiscard = document.querySelector("#staging-discard");
+
+      let stagingData = null;
+
+      const showImportError = (msg) => {
+        importError.textContent = msg;
+        importError.classList.add("visible");
+      };
+
+      const clearImportState = () => {
+        importSpinner.classList.remove("visible");
+        importError.classList.remove("visible");
+      };
+
+      const renderStaging = (data) => {
+        stagingData = data;
+        stagingMerchant.textContent = data.merchant
+          ? `Items from ${data.merchant}`
+          : "Extracted Items";
+
+        stagingItems.innerHTML = "";
+        (data.items || []).forEach((item, i) => {
+          const row = document.createElement("div");
+          row.className = "staging-item";
+          row.innerHTML = `
+            <input type="checkbox" checked data-staging-index="${i}" />
+            <input type="text" value="${item.name}" data-staging-index="${i}" data-staging-field="name" />
+            <input type="text" value="${formatCurrency(item.price)}" data-staging-index="${i}" data-staging-field="price" />
+          `;
+          stagingItems.appendChild(row);
+        });
+
+        stagingMeta.innerHTML = "";
+        if (data.tax != null) {
+          stagingMeta.innerHTML += `<label><input type="checkbox" checked id="staging-apply-tax" /> Apply tax: ${formatCurrency(data.tax)}</label>`;
+        }
+        if (data.tip != null) {
+          stagingMeta.innerHTML += `<label><input type="checkbox" checked id="staging-apply-tip" /> Apply tip: ${formatCurrency(data.tip)}</label>`;
+        }
+        if (data.fees != null && data.fees > 0) {
+          stagingMeta.innerHTML += `<label><input type="checkbox" checked id="staging-apply-fees" /> Apply fees: ${formatCurrency(data.fees)}</label>`;
+        }
+
+        stagingArea.classList.add("visible");
+      };
+
+      const parseReceipt = async (body) => {
+        clearImportState();
+        importSpinner.classList.add("visible");
+        try {
+          const res = await fetch("/api/parse-receipt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          importSpinner.classList.remove("visible");
+          if (!res.ok) {
+            showImportError(data.error || "Failed to parse receipt");
+            return;
+          }
+          if (!data.items || !data.items.length) {
+            showImportError("No items found on receipt");
+            return;
+          }
+          renderStaging(data);
+        } catch (err) {
+          importSpinner.classList.remove("visible");
+          showImportError(err.message);
+        }
+      };
+
+      importUrlBtn.addEventListener("click", () => {
+        const url = importUrl.value.trim();
+        if (!url) return;
+        parseReceipt({ type: "url", url });
+      });
+
+      importPhoto.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => parseReceipt({ type: "image", image: reader.result });
+        reader.readAsDataURL(file);
+      });
+
+      stagingAdd.addEventListener("click", () => {
+        if (!stagingData) return;
+
+        const checkedItems = [];
+        stagingItems.querySelectorAll(".staging-item").forEach((row) => {
+          const checkbox = row.querySelector('input[type="checkbox"]');
+          if (!checkbox.checked) return;
+          const nameInput = row.querySelector('[data-staging-field="name"]');
+          const priceInput = row.querySelector('[data-staging-field="price"]');
+          checkedItems.push({
+            id: createId(),
+            name: nameInput.value,
+            price: priceInput.value,
+          });
+        });
+
+        if (checkedItems.length) {
+          state.people.push({
+            id: createId(),
+            name: stagingData.merchant || "",
+            items: checkedItems,
+          });
+        }
+
+        const applyTax = document.querySelector("#staging-apply-tax");
+        if (applyTax && applyTax.checked && stagingData.tax != null) {
+          state.bill.tax = formatCurrency(stagingData.tax);
+          state.bill.taxMode = "amount";
+          elements.billTax.value = state.bill.tax;
+          elements.billTaxMode.value = "amount";
+        }
+
+        const applyTip = document.querySelector("#staging-apply-tip");
+        if (applyTip && applyTip.checked && stagingData.tip != null) {
+          state.bill.tip = formatCurrency(stagingData.tip);
+          state.bill.tipMode = "amount";
+          elements.billTip.value = state.bill.tip;
+          elements.billTipMode.value = "amount";
+        }
+
+        const applyFees = document.querySelector("#staging-apply-fees");
+        if (applyFees && applyFees.checked && stagingData.fees != null) {
+          state.bill.fee = formatCurrency(stagingData.fees);
+          elements.billFee.value = state.bill.fee;
+        }
+
+        stagingData = null;
+        stagingArea.classList.remove("visible");
+        importUrl.value = "";
+        importPhoto.value = "";
+        render();
+      });
+
+      stagingDiscard.addEventListener("click", () => {
+        stagingData = null;
+        stagingArea.classList.remove("visible");
+      });
     </script>
   </body>
 </html>
