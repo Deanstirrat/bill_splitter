@@ -175,9 +175,14 @@
 
       .item-row {
         display: grid;
-        grid-template-columns: 1fr 110px auto;
+        grid-template-columns: 1fr 110px auto auto;
         gap: 8px;
         align-items: center;
+      }
+
+      .item-row select {
+        width: auto;
+        min-width: 90px;
       }
 
       .summary-row {
@@ -717,9 +722,17 @@
           person.items.forEach((item) => {
             const row = document.createElement("div");
             row.className = "item-row";
+            const otherPeople = state.people.filter((p) => p.id !== person.id);
+            const moveSelect = otherPeople.length
+              ? `<select data-person="${person.id}" data-item="${item.id}" data-action="move-item">
+                  <option value="">Move to…</option>
+                  ${otherPeople.map((p) => `<option value="${p.id}">${p.name || "Untitled person"}</option>`).join("")}
+                </select>`
+              : `<span></span>`;
             row.innerHTML = `
               <input type="text" value="${item.name}" placeholder="Item name" data-person="${person.id}" data-item="${item.id}" data-field="name" />
               <input type="text" value="${item.price}" placeholder="$0.00" data-person="${person.id}" data-item="${item.id}" data-field="price" />
+              ${moveSelect}
               <button class="button secondary" data-person="${person.id}" data-item="${item.id}" data-action="remove-item">Remove</button>
             `;
             items.appendChild(row);
@@ -815,7 +828,26 @@
         render();
       };
 
+      const moveItem = (fromPersonId, itemId, toPersonId) => {
+        const fromPerson = state.people.find((p) => p.id === fromPersonId);
+        const toPerson = state.people.find((p) => p.id === toPersonId);
+        if (!fromPerson || !toPerson) return;
+        const item = fromPerson.items.find((i) => i.id === itemId);
+        if (!item) return;
+        fromPerson.items = fromPerson.items.filter((i) => i.id !== itemId);
+        toPerson.items.push(item);
+        render();
+      };
+
       elements.addPerson.addEventListener("click", addPerson);
+
+      elements.peopleList.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLSelectElement)) return;
+        if (target.dataset.action === "move-item" && target.value) {
+          moveItem(target.dataset.person, target.dataset.item, target.value);
+        }
+      });
 
       elements.peopleList.addEventListener("input", (event) => {
         const target = event.target;
