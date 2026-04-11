@@ -567,6 +567,8 @@
         personSummary: document.querySelector("#person-summary"),
       };
 
+      const escapeAttr = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
       const parseCurrency = (value) => {
         if (!value) return 0;
         const numeric = Number.parseFloat(value.replace(/[^0-9.-]/g, ""));
@@ -714,7 +716,7 @@
           nameField.className = "field";
           nameField.innerHTML = `
             <label>Person name</label>
-            <input type="text" value="${person.name}" data-person="${person.id}" data-field="person-name" />
+            <input type="text" value="${escapeAttr(person.name)}" data-person="${person.id}" data-field="person-name" />
           `;
 
           const items = document.createElement("div");
@@ -730,8 +732,8 @@
                 </select>`
               : `<span></span>`;
             row.innerHTML = `
-              <input type="text" value="${item.name}" placeholder="Item name" data-person="${person.id}" data-item="${item.id}" data-field="name" />
-              <input type="text" value="${item.price}" placeholder="$0.00" data-person="${person.id}" data-item="${item.id}" data-field="price" />
+              <input type="text" value="${escapeAttr(item.name)}" placeholder="Item name" data-person="${person.id}" data-item="${item.id}" data-field="name" />
+              <input type="text" value="${escapeAttr(item.price)}" placeholder="$0.00" data-person="${person.id}" data-item="${item.id}" data-field="price" />
               ${moveSelect}
               <button class="button secondary" data-person="${person.id}" data-item="${item.id}" data-action="remove-item">Remove</button>
             `;
@@ -982,7 +984,7 @@
           row.className = "staging-item";
           row.innerHTML = `
             <input type="checkbox" checked data-staging-index="${i}" />
-            <input type="text" value="${item.name}" data-staging-index="${i}" data-staging-field="name" />
+            <input type="text" value="${escapeAttr(item.name)}" data-staging-index="${i}" data-staging-field="name" />
             <input type="text" value="${formatCurrency(item.price)}" data-staging-index="${i}" data-staging-field="price" />
           `;
           stagingItems.appendChild(row);
@@ -1064,6 +1066,11 @@
             name: stagingData.merchant || "",
             items: checkedItems,
           });
+        }
+
+        if (stagingData.merchant && !state.bill.name) {
+          state.bill.name = stagingData.merchant;
+          elements.billName.value = stagingData.merchant;
         }
 
         const applyTax = document.querySelector("#staging-apply-tax");
