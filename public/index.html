@@ -886,8 +886,11 @@
       const getPersonSubtotal = (person) =>
         person.items.reduce((total, item) => total + parseCurrency(item.price), 0);
 
+      const getUnassignedSubtotal = () =>
+        state.unassigned.reduce((total, item) => total + parseCurrency(item.price), 0);
+
       const getItemsSubtotal = () =>
-        state.people.reduce((total, person) => total + getPersonSubtotal(person), 0);
+        state.people.reduce((total, person) => total + getPersonSubtotal(person), 0) + getUnassignedSubtotal();
 
       const getAllocationRatio = (person) => {
         const subtotal = getPersonSubtotal(person);
@@ -954,6 +957,24 @@
           row.innerHTML = "<span>No people added yet.</span>";
           elements.personSummary.appendChild(row);
           return;
+        }
+
+        const unassignedTotal = getUnassignedSubtotal();
+        if (unassignedTotal > 0) {
+          const block = document.createElement("div");
+          block.className = "person-breakdown";
+          block.innerHTML = `
+            <div class="summary-row">
+              <strong>Unassigned</strong>
+              <strong>${formatCurrency(unassignedTotal)}</strong>
+            </div>
+            ${state.unassigned.filter(i => parseCurrency(i.price) > 0).map(i => `
+            <div class="summary-row">
+              <span>${i.name || "Unnamed item"}</span>
+              <span>${formatCurrency(parseCurrency(i.price))}</span>
+            </div>`).join("")}
+          `;
+          elements.personSummary.appendChild(block);
         }
 
         state.people.forEach((person) => {
