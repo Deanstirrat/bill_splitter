@@ -297,6 +297,75 @@
         font-size: 14px;
       }
 
+      .quick-setup {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .quick-setup-label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 500;
+        margin: 0;
+      }
+
+      .count-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .count-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        font-size: 15px;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        transition: background 0.1s, border-color 0.1s, color 0.1s;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .count-btn:hover {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+      }
+
+      .count-btn.selected {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
+
+      .quick-names {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+
+      .quick-name-input {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .quick-name-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+      }
+
       .footer {
         display: flex;
         justify-content: flex-end;
@@ -566,8 +635,23 @@
           <h2>People</h2>
           <p class="section-label">Inline editing for names and item prices</p>
           <div class="people-list" id="people-list"></div>
-          <div class="empty-state" id="people-empty">Add someone to start entering items.</div>
-          <button class="button" id="add-person">+ Add person</button>
+          <div id="people-empty">
+            <div class="quick-setup">
+              <p class="quick-setup-label">How many people?</p>
+              <div class="count-buttons" id="count-buttons">
+                <button class="count-btn" data-count="2">2</button>
+                <button class="count-btn" data-count="3">3</button>
+                <button class="count-btn" data-count="4">4</button>
+                <button class="count-btn" data-count="5">5</button>
+                <button class="count-btn" data-count="6">6</button>
+                <button class="count-btn" data-count="7">7</button>
+                <button class="count-btn" data-count="8">8</button>
+              </div>
+              <div class="quick-names" id="quick-names"></div>
+              <button class="button" id="quick-add-btn" style="display:none">Add people</button>
+            </div>
+          </div>
+          <button class="button" id="add-person" style="display:none">+ Add person</button>
         </section>
 
         <section class="card">
@@ -648,6 +732,9 @@
         addPerson: document.querySelector("#add-person"),
         peopleList: document.querySelector("#people-list"),
         peopleEmpty: document.querySelector("#people-empty"),
+        quickNames: document.querySelector("#quick-names"),
+        quickAddBtn: document.querySelector("#quick-add-btn"),
+        countButtons: document.querySelector("#count-buttons"),
         summarySubtotal: document.querySelector("#summary-subtotal"),
         summaryTax: document.querySelector("#summary-tax"),
         summaryTip: document.querySelector("#summary-tip"),
@@ -966,7 +1053,9 @@
           elements.peopleList.appendChild(card);
         });
 
-        elements.peopleEmpty.style.display = state.people.length ? "none" : "block";
+        const hasPeople = state.people.length > 0;
+        elements.peopleEmpty.style.display = hasPeople ? "none" : "block";
+        elements.addPerson.style.display = hasPeople ? "inline-flex" : "none";
       };
 
       const render = () => {
@@ -1239,8 +1328,67 @@
       elements.billTaxMode.addEventListener("change", (event) => updateBillField("taxMode", event.target.value));
       elements.billTipMode.addEventListener("change", (event) => updateBillField("tipMode", event.target.value));
 
-      addPerson();
-      addPerson();
+      // --- Quick Setup ---
+      let quickCount = 0;
+
+      const renderQuickNames = (count) => {
+        elements.quickNames.innerHTML = "";
+        for (let i = 0; i < count; i++) {
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "quick-name-input";
+          input.placeholder = `Person ${i + 1}`;
+          input.dataset.quickIndex = i;
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              const inputs = elements.quickNames.querySelectorAll(".quick-name-input");
+              const next = inputs[i + 1];
+              if (next) next.focus();
+              else commitQuickSetup();
+            }
+          });
+          elements.quickNames.appendChild(input);
+        }
+        elements.quickAddBtn.style.display = count > 0 ? "inline-flex" : "none";
+        if (count > 0) {
+          const first = elements.quickNames.querySelector(".quick-name-input");
+          if (first) first.focus();
+        }
+      };
+
+      const commitQuickSetup = () => {
+        const inputs = elements.quickNames.querySelectorAll(".quick-name-input");
+        if (!inputs.length) return;
+        inputs.forEach((input) => {
+          state.people.push({
+            id: createId(),
+            name: input.value.trim(),
+            items: [
+              { id: createId(), name: "", price: "" },
+              { id: createId(), name: "", price: "" },
+            ],
+          });
+        });
+        quickCount = 0;
+        elements.countButtons.querySelectorAll(".count-btn").forEach((b) => b.classList.remove("selected"));
+        elements.quickNames.innerHTML = "";
+        elements.quickAddBtn.style.display = "none";
+        render();
+      };
+
+      elements.countButtons.addEventListener("click", (e) => {
+        const btn = e.target.closest(".count-btn");
+        if (!btn) return;
+        const count = Number(btn.dataset.count);
+        quickCount = count;
+        elements.countButtons.querySelectorAll(".count-btn").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        renderQuickNames(count);
+      });
+
+      elements.quickAddBtn.addEventListener("click", commitQuickSetup);
+
+      render();
 
       // --- Import Receipt ---
       const importUrl = document.querySelector("#import-url");
