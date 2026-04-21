@@ -792,6 +792,7 @@
 
           <div class="footer">
             <span class="save-toast" id="save-toast">Saved!</span>
+            <button class="button secondary" id="export-csv-btn">Export CSV</button>
             <button class="button secondary" id="save-draft-btn">Save</button>
           </div>
         </section>
@@ -1710,6 +1711,72 @@
             deleteBill(billId);
           }
         }
+      });
+
+      document.querySelector("#export-csv-btn").addEventListener("click", () => {
+        const billName = state.bill.name.trim() || "bill-split";
+        const rows = [];
+
+        rows.push(["Bill Split Export"]);
+        rows.push(["Bill", billName]);
+        rows.push([]);
+
+        // Bill-level totals
+        const subtotal = getItemsSubtotal();
+        const tax = getBillTaxAmount();
+        const tip = getBillTipAmount();
+        const fee = parseCurrency(state.bill.fee);
+        const grandTotal = subtotal + tax + tip + fee;
+        rows.push(["BILL TOTALS"]);
+        rows.push(["Subtotal", subtotal.toFixed(2)]);
+        rows.push(["Tax", tax.toFixed(2)]);
+        rows.push(["Tip", tip.toFixed(2)]);
+        rows.push(["Fees", fee.toFixed(2)]);
+        rows.push(["Grand Total", grandTotal.toFixed(2)]);
+        rows.push([]);
+
+        // Unassigned items
+        if (state.unassigned.length) {
+          rows.push(["UNASSIGNED ITEMS"]);
+          rows.push(["Item", "Price"]);
+          state.unassigned.forEach(i => {
+            rows.push([i.name || "Unnamed item", parseCurrency(i.price).toFixed(2)]);
+          });
+          rows.push(["Unassigned Subtotal", getUnassignedSubtotal().toFixed(2)]);
+          rows.push([]);
+        }
+
+        // Per-person breakdown
+        rows.push(["PERSON BREAKDOWN"]);
+        rows.push(["Person", "Item", "Item Price", "Subtotal", "Tax Share", "Tip Share", "Fee Share", "Total"]);
+        state.people.forEach(person => {
+          const totals = getPersonTotals(person);
+          const name = person.name || "Untitled";
+          if (person.items.length === 0) {
+            rows.push([name, "", "", totals.subtotal.toFixed(2), totals.taxShare.toFixed(2), totals.tipShare.toFixed(2), totals.feeShare.toFixed(2), totals.total.toFixed(2)]);
+          } else {
+            person.items.forEach((item, idx) => {
+              if (idx === 0) {
+                rows.push([name, item.name || "Unnamed item", parseCurrency(item.price).toFixed(2), totals.subtotal.toFixed(2), totals.taxShare.toFixed(2), totals.tipShare.toFixed(2), totals.feeShare.toFixed(2), totals.total.toFixed(2)]);
+              } else {
+                rows.push(["", item.name || "Unnamed item", parseCurrency(item.price).toFixed(2), "", "", "", "", ""]);
+              }
+            });
+          }
+        });
+
+        const csvContent = rows.map(r => r.map(cell => {
+          const s = String(cell);
+          return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+        }).join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${billName.replace(/\s+/g, "-").toLowerCase()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
       });
 
       document.querySelector("#save-draft-btn").addEventListener("click", () => {
