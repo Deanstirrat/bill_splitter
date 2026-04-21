@@ -509,6 +509,89 @@
         }
       }
 
+      .bills-manager {
+        background: #fff;
+        border-radius: 16px;
+        padding: 14px 20px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      }
+
+      .bills-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .bills-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+      }
+
+      #bills-active-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #111827;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .bills-bar-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .bills-list {
+        margin-top: 12px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .bills-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 0;
+        border-top: 1px solid #f3f4f6;
+      }
+
+      .bills-row-name {
+        font-size: 14px;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .bills-row-name.active {
+        color: #2563eb;
+      }
+
+      .bills-row-time {
+        font-size: 12px;
+        color: #9ca3af;
+        white-space: nowrap;
+      }
+
+      .save-toast {
+        font-size: 12px;
+        color: #16a34a;
+        font-weight: 600;
+        transition: opacity 0.4s;
+        opacity: 0;
+      }
+
+      .save-toast.visible {
+        opacity: 1;
+      }
+
       @media (max-width: 540px) {
         body {
           padding: 12px;
@@ -541,6 +624,19 @@
         <h1>Bill Splitter</h1>
         <p>Split shared bills quickly with live totals and per-person payment links.</p>
       </header>
+
+      <section class="bills-manager" id="bills-manager">
+        <div class="bills-bar">
+          <div class="bills-bar-left">
+            <span id="bills-active-name">Untitled bill</span>
+          </div>
+          <div class="bills-bar-actions">
+            <button class="button secondary" id="bills-toggle">Bills (0)</button>
+            <button class="button" id="bills-new">+ New bill</button>
+          </div>
+        </div>
+        <div class="bills-list" id="bills-list" hidden></div>
+      </section>
 
       <section class="import-section">
         <h2>Import Receipt</h2>
@@ -683,8 +779,8 @@
           </div>
 
           <div class="footer">
-            <button class="button secondary">Save draft</button>
-            <button class="button">Finalize split</button>
+            <span class="save-toast" id="save-toast">Saved!</span>
+            <button class="button secondary" id="save-draft-btn">Save</button>
           </div>
         </section>
       </div>
@@ -696,13 +792,23 @@
         currency: "USD",
       });
 
-      const createId = (() => {
-        let index = 0;
-        return () => {
-          index += 1;
-          return `id-${index}`;
-        };
-      })();
+      let _idCounter = 0;
+      const createId = () => {
+        _idCounter += 1;
+        return `id-${_idCounter}`;
+      };
+      const seedIdCounter = (loadedState) => {
+        const allIds = [
+          ...(loadedState.people ?? []).map((p) => p.id),
+          ...(loadedState.people ?? []).flatMap((p) => (p.items ?? []).map((i) => i.id)),
+          ...(loadedState.unassigned ?? []).map((i) => i.id),
+        ];
+        const max = allIds.reduce((m, id) => {
+          const n = parseInt((id ?? "").replace("id-", ""), 10);
+          return isNaN(n) ? m : Math.max(m, n);
+        }, 0);
+        _idCounter = max;
+      };
 
       const state = {
         bill: {
@@ -1063,6 +1169,7 @@
         renderPeople();
         renderSummary();
         renderPersonSummary();
+        if (typeof autoSave === "function") autoSave();
       };
 
       const syncPersonCardMeta = (personId) => {
@@ -1083,6 +1190,7 @@
         state.bill[field] = value;
         renderSummary();
         renderPersonSummary();
+        if (typeof autoSave === "function") autoSave();
       };
 
       const formatCurrencyInput = (input) => {
@@ -1152,7 +1260,10 @@
         const field = target.dataset.field;
         if (itemId && field) {
           const item = state.unassigned.find((i) => i.id === itemId);
-          if (item) item[field] = target.value;
+          if (item) {
+            item[field] = target.value;
+            if (typeof autoSave === "function") autoSave();
+          }
         }
       });
 
@@ -1223,6 +1334,7 @@
             person.name = target.value;
             syncPersonCardMeta(personId);
             renderPersonSummary();
+            if (typeof autoSave === "function") autoSave();
           }
           return;
         }
@@ -1236,6 +1348,7 @@
           renderSummary();
           syncPersonCardMeta(personId);
           renderPersonSummary();
+          if (typeof autoSave === "function") autoSave();
         }
       });
 
@@ -1388,7 +1501,200 @@
 
       elements.quickAddBtn.addEventListener("click", commitQuickSetup);
 
-      render();
+      // --- Persistence ---
+
+      let currentBillId = null;
+      let _saveTimer = null;
+
+      const getBillIndex = () => {
+        try { return JSON.parse(localStorage.getItem("bsp:bills") || "[]"); } catch { return []; }
+      };
+      const saveBillIndex = (index) => localStorage.setItem("bsp:bills", JSON.stringify(index));
+
+      const serializeState = () => JSON.parse(JSON.stringify(state));
+
+      const deserializeState = (snapshot) => {
+        Object.assign(state.bill, snapshot.bill ?? {});
+        state.people = snapshot.people ?? [];
+        state.unassigned = snapshot.unassigned ?? [];
+      };
+
+      const syncDomInputs = () => {
+        elements.billName.value = state.bill.name;
+        elements.billTax.value = state.bill.tax;
+        elements.billTaxMode.value = state.bill.taxMode;
+        elements.billTip.value = state.bill.tip;
+        elements.billTipMode.value = state.bill.tipMode;
+        elements.billFee.value = state.bill.fee;
+        elements.billFeeAllocation.value = state.bill.feeAllocation;
+        elements.billActualTotal.value = state.bill.actualTotal;
+      };
+
+      const resetStateToDefaults = () => {
+        state.bill = { name: "", tax: "", taxMode: "amount", tip: "", tipMode: "amount", fee: "", feeAllocation: "even", actualTotal: "" };
+        state.people = [];
+        state.unassigned = [];
+      };
+
+      const renderBillsList = () => {
+        const index = getBillIndex();
+        const toggleEl = document.querySelector("#bills-toggle");
+        const nameEl = document.querySelector("#bills-active-name");
+        if (toggleEl) toggleEl.textContent = `Bills (${index.length})`;
+        const activeBill = index.find((b) => b.id === currentBillId);
+        if (nameEl) nameEl.textContent = activeBill ? activeBill.name : (state.bill.name.trim() || "Untitled bill");
+        const billsList = document.querySelector("#bills-list");
+        if (!billsList) return;
+        billsList.innerHTML = "";
+        if (!index.length) {
+          billsList.innerHTML = '<p class="balance-note" style="margin:0">No saved bills yet.</p>';
+          return;
+        }
+        index.forEach((bill) => {
+          const row = document.createElement("div");
+          row.className = "bills-row";
+          const isActive = bill.id === currentBillId;
+          const d = new Date(bill.updatedAt);
+          const timeStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+          row.innerHTML = `
+            <span class="bills-row-name${isActive ? " active" : ""}">${escapeAttr(bill.name)}</span>
+            <span class="bills-row-time">${timeStr}</span>
+            <button class="button${isActive ? " secondary" : ""}" data-bill-id="${escapeAttr(bill.id)}" data-action="load-bill">${isActive ? "Current" : "Load"}</button>
+            <button class="button secondary" data-bill-id="${escapeAttr(bill.id)}" data-action="delete-bill">Delete</button>
+          `;
+          billsList.appendChild(row);
+        });
+      };
+
+      const saveCurrentBill = () => {
+        if (!currentBillId) return;
+        localStorage.setItem(`bsp:bill:${currentBillId}`, JSON.stringify(serializeState()));
+        const index = getBillIndex();
+        const name = state.bill.name.trim() || "Untitled bill";
+        const existing = index.find((b) => b.id === currentBillId);
+        if (existing) {
+          existing.name = name;
+          existing.updatedAt = Date.now();
+        } else {
+          index.unshift({ id: currentBillId, name, updatedAt: Date.now() });
+        }
+        saveBillIndex(index);
+        renderBillsList();
+      };
+
+      const autoSave = () => {
+        clearTimeout(_saveTimer);
+        _saveTimer = setTimeout(saveCurrentBill, 500);
+      };
+
+      const loadBill = (id) => {
+        const raw = localStorage.getItem(`bsp:bill:${id}`);
+        if (!raw) return;
+        try {
+          const snapshot = JSON.parse(raw);
+          deserializeState(snapshot);
+          seedIdCounter(state);
+          currentBillId = id;
+          localStorage.setItem("bsp:current", id);
+          syncDomInputs();
+          render();
+          renderBillsList();
+        } catch (e) {
+          console.error("Failed to load bill", e);
+        }
+      };
+
+      const createNewBill = () => {
+        saveCurrentBill();
+        resetStateToDefaults();
+        _idCounter = 0;
+        const id = `bill-${Date.now()}`;
+        currentBillId = id;
+        localStorage.setItem("bsp:current", id);
+        const index = getBillIndex();
+        index.unshift({ id, name: "Untitled bill", updatedAt: Date.now() });
+        saveBillIndex(index);
+        syncDomInputs();
+        render();
+        renderBillsList();
+        document.querySelector("#bills-list").hidden = true;
+      };
+
+      const deleteBill = (id) => {
+        localStorage.removeItem(`bsp:bill:${id}`);
+        const index = getBillIndex().filter((b) => b.id !== id);
+        saveBillIndex(index);
+        if (id === currentBillId) {
+          if (index.length > 0) {
+            loadBill(index[0].id);
+          } else {
+            const newId = `bill-${Date.now()}`;
+            currentBillId = newId;
+            localStorage.setItem("bsp:current", newId);
+            resetStateToDefaults();
+            _idCounter = 0;
+            syncDomInputs();
+            render();
+          }
+        }
+        renderBillsList();
+      };
+
+      // --- Bills manager event listeners ---
+
+      document.querySelector("#bills-toggle").addEventListener("click", () => {
+        const list = document.querySelector("#bills-list");
+        list.hidden = !list.hidden;
+        if (!list.hidden) renderBillsList();
+      });
+
+      document.querySelector("#bills-new").addEventListener("click", createNewBill);
+
+      document.querySelector("#bills-list").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const billId = btn.dataset.billId;
+        if (action === "load-bill" && billId && billId !== currentBillId) {
+          saveCurrentBill();
+          loadBill(billId);
+          document.querySelector("#bills-list").hidden = true;
+        }
+        if (action === "delete-bill" && billId) {
+          if (confirm("Delete this bill? This cannot be undone.")) {
+            deleteBill(billId);
+          }
+        }
+      });
+
+      document.querySelector("#save-draft-btn").addEventListener("click", () => {
+        saveCurrentBill();
+        const toast = document.querySelector("#save-toast");
+        toast.classList.add("visible");
+        setTimeout(() => toast.classList.remove("visible"), 1800);
+      });
+
+      // --- Init ---
+
+      const initApp = () => {
+        const index = getBillIndex();
+        const savedId = localStorage.getItem("bsp:current");
+        if (savedId && index.find((b) => b.id === savedId)) {
+          loadBill(savedId);
+        } else if (index.length > 0) {
+          loadBill(index[0].id);
+        } else {
+          const id = `bill-${Date.now()}`;
+          currentBillId = id;
+          localStorage.setItem("bsp:current", id);
+          index.unshift({ id, name: "Untitled bill", updatedAt: Date.now() });
+          saveBillIndex(index);
+          render();
+          renderBillsList();
+        }
+      };
+
+      initApp();
 
       // --- Import Receipt ---
       const importUrl = document.querySelector("#import-url");
