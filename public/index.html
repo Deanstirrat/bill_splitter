@@ -175,7 +175,7 @@
 
       .item-row {
         display: grid;
-        grid-template-columns: 1fr 110px auto auto;
+        grid-template-columns: 1fr 110px auto auto auto;
         gap: 8px;
         align-items: center;
       }
@@ -183,6 +183,63 @@
       .item-row select {
         width: auto;
         min-width: 90px;
+      }
+
+      .unassigned-section {
+        display: none;
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px;
+        border: 1px solid #fbbf24;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .unassigned-section.visible {
+        display: flex;
+      }
+
+      .unassigned-section h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .unassigned-items {
+        display: grid;
+        gap: 8px;
+      }
+
+      .split-panel {
+        display: none;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        padding: 12px;
+        background: #eff6ff;
+        gap: 10px;
+        margin-top: 2px;
+      }
+
+      .split-panel.visible {
+        display: grid;
+      }
+
+      .split-panel-people {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .split-panel-people label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      .split-panel-people input[type="checkbox"] {
+        width: auto;
       }
 
       .summary-row {
@@ -423,6 +480,12 @@
         </div>
       </section>
 
+      <section class="unassigned-section" id="unassigned-section">
+        <h2>Unassigned Items</h2>
+        <p class="section-label">Assign each item to a person or split it between multiple people</p>
+        <div class="unassigned-items" id="unassigned-items"></div>
+      </section>
+
       <div class="layout">
         <section class="card">
           <h2>Bill details</h2>
@@ -544,6 +607,7 @@
           actualTotal: "",
         },
         people: [],
+        unassigned: [],
       };
 
       const elements = {
@@ -565,7 +629,12 @@
         summaryFee: document.querySelector("#summary-fee"),
         summaryTotal: document.querySelector("#summary-total"),
         personSummary: document.querySelector("#person-summary"),
+        unassignedSection: document.querySelector("#unassigned-section"),
+        unassignedItems: document.querySelector("#unassigned-items"),
       };
+
+      let activeSplitItemId = null;
+      let activeSplitSource = null;
 
       const escapeAttr = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
@@ -699,6 +768,95 @@
         });
       };
 
+      const renderUnassigned = () => {
+        if (!state.unassigned.length) {
+          elements.unassignedSection.classList.remove("visible");
+          return;
+        }
+        elements.unassignedSection.classList.add("visible");
+        elements.unassignedItems.innerHTML = "";
+        state.unassigned.forEach((item) => {
+          const wrap = document.createElement("div");
+          const row = document.createElement("div");
+          row.className = "item-row";
+          const assignSelect = state.people.length
+            ? `<select data-item="${item.id}" data-action="assign-item">
+                <option value="">Assign to…</option>
+                ${state.people.map((p) => `<option value="${p.id}">${escapeAttr(p.name || "Untitled person")}</option>`).join("")}
+              </select>`
+            : `<span></span>`;
+          row.innerHTML = `
+            <input type="text" value="${escapeAttr(item.name)}" placeholder="Item name" data-item="${item.id}" data-source="unassigned" data-field="name" />
+            <input type="text" value="${escapeAttr(item.price)}" placeholder="$0.00" data-item="${item.id}" data-source="unassigned" data-field="price" />
+            ${assignSelect}
+            <button class="button secondary" data-item="${item.id}" data-source="unassigned" data-action="toggle-split">Split…</button>
+            <button class="button secondary" data-item="${item.id}" data-source="unassigned" data-action="remove-unassigned">Remove</button>
+          `;
+          wrap.appendChild(row);
+
+          if (activeSplitItemId === item.id && activeSplitSource === "unassigned") {
+            const panel = document.createElement("div");
+            panel.className = "split-panel visible";
+            if (!state.people.length) {
+              panel.innerHTML = `<p class="balance-note">Add people first to split an item.</p><div class="button-row"><button class="button secondary" data-action="cancel-split">Cancel</button></div>`;
+            } else {
+              panel.innerHTML = `
+                <div class="split-panel-people">
+                  ${state.people.map((p) => `<label><input type="checkbox" name="split-person" value="${p.id}" />${escapeAttr(p.name || "Untitled person")}</label>`).join("")}
+                </div>
+                <div class="button-row">
+                  <button class="button" data-item="${item.id}" data-source="unassigned" data-action="confirm-split">Split</button>
+                  <button class="button secondary" data-action="cancel-split">Cancel</button>
+                </div>
+              `;
+            }
+            wrap.appendChild(panel);
+          }
+          elements.unassignedItems.appendChild(wrap);
+        });
+      };
+
+      const assignItem = (itemId, personId) => {
+        const item = state.unassigned.find((i) => i.id === itemId);
+        const person = state.people.find((p) => p.id === personId);
+        if (!item || !person) return;
+        state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
+        person.items.push(item);
+        render();
+      };
+
+      const removeUnassignedItem = (itemId) => {
+        state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
+        render();
+      };
+
+      const splitItem = (source, itemId, selectedPersonIds) => {
+        const count = selectedPersonIds.length;
+        if (!count) return;
+        let item;
+        if (source === "unassigned") {
+          item = state.unassigned.find((i) => i.id === itemId);
+          if (!item) return;
+          state.unassigned = state.unassigned.filter((i) => i.id !== itemId);
+        } else {
+          const person = state.people.find((p) => p.id === source);
+          if (!person) return;
+          item = person.items.find((i) => i.id === itemId);
+          if (!item) return;
+          person.items = person.items.filter((i) => i.id !== itemId);
+        }
+        const unitPrice = parseCurrency(item.price) / count;
+        selectedPersonIds.forEach((personId) => {
+          const person = state.people.find((p) => p.id === personId);
+          if (person) {
+            person.items.push({ id: createId(), name: item.name, price: formatCurrency(unitPrice) });
+          }
+        });
+        activeSplitItemId = null;
+        activeSplitSource = null;
+        render();
+      };
+
       const renderPeople = () => {
         elements.peopleList.innerHTML = "";
         state.people.forEach((person) => {
@@ -722,22 +880,45 @@
           const items = document.createElement("div");
           items.className = "items";
           person.items.forEach((item) => {
+            const wrap = document.createElement("div");
             const row = document.createElement("div");
             row.className = "item-row";
             const otherPeople = state.people.filter((p) => p.id !== person.id);
             const moveSelect = otherPeople.length
               ? `<select data-person="${person.id}" data-item="${item.id}" data-action="move-item">
                   <option value="">Move to…</option>
-                  ${otherPeople.map((p) => `<option value="${p.id}">${p.name || "Untitled person"}</option>`).join("")}
+                  ${otherPeople.map((p) => `<option value="${p.id}">${escapeAttr(p.name || "Untitled person")}</option>`).join("")}
                 </select>`
               : `<span></span>`;
             row.innerHTML = `
               <input type="text" value="${escapeAttr(item.name)}" placeholder="Item name" data-person="${person.id}" data-item="${item.id}" data-field="name" />
               <input type="text" value="${escapeAttr(item.price)}" placeholder="$0.00" data-person="${person.id}" data-item="${item.id}" data-field="price" />
               ${moveSelect}
+              <button class="button secondary" data-person="${person.id}" data-item="${item.id}" data-action="toggle-split">Split…</button>
               <button class="button secondary" data-person="${person.id}" data-item="${item.id}" data-action="remove-item">Remove</button>
             `;
-            items.appendChild(row);
+            wrap.appendChild(row);
+
+            if (activeSplitItemId === item.id && activeSplitSource === person.id) {
+              const panel = document.createElement("div");
+              panel.className = "split-panel visible";
+              const splitPeople = state.people.filter((p) => p.id !== person.id);
+              if (!splitPeople.length) {
+                panel.innerHTML = `<p class="balance-note">Add more people to split an item.</p><div class="button-row"><button class="button secondary" data-action="cancel-split">Cancel</button></div>`;
+              } else {
+                panel.innerHTML = `
+                  <div class="split-panel-people">
+                    ${splitPeople.map((p) => `<label><input type="checkbox" name="split-person" value="${p.id}" />${escapeAttr(p.name || "Untitled person")}</label>`).join("")}
+                  </div>
+                  <div class="button-row">
+                    <button class="button" data-person="${person.id}" data-item="${item.id}" data-action="confirm-split">Split</button>
+                    <button class="button secondary" data-action="cancel-split">Cancel</button>
+                  </div>
+                `;
+              }
+              wrap.appendChild(panel);
+            }
+            items.appendChild(wrap);
           });
 
           const addItemButton = document.createElement("button");
@@ -764,6 +945,7 @@
       };
 
       const render = () => {
+        renderUnassigned();
         renderPeople();
         renderSummary();
         renderPersonSummary();
@@ -841,6 +1023,69 @@
         render();
       };
 
+      elements.unassignedItems.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLSelectElement)) return;
+        if (target.dataset.action === "assign-item" && target.value) {
+          assignItem(target.dataset.item, target.value);
+        }
+      });
+
+      elements.unassignedItems.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+        const itemId = target.dataset.item;
+        const field = target.dataset.field;
+        if (itemId && field) {
+          const item = state.unassigned.find((i) => i.id === itemId);
+          if (item) item[field] = target.value;
+        }
+      });
+
+      elements.unassignedItems.addEventListener(
+        "blur",
+        (event) => {
+          const target = event.target;
+          if (!(target instanceof HTMLInputElement)) return;
+          if (target.dataset.field === "price") {
+            formatCurrencyInput(target);
+            const item = state.unassigned.find((i) => i.id === target.dataset.item);
+            if (item) item.price = target.value;
+          }
+        },
+        true
+      );
+
+      elements.unassignedItems.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        const action = target.dataset.action;
+        const itemId = target.dataset.item;
+        const source = target.dataset.source;
+
+        if (action === "remove-unassigned" && itemId) {
+          removeUnassignedItem(itemId);
+        } else if (action === "toggle-split" && itemId) {
+          if (activeSplitItemId === itemId) {
+            activeSplitItemId = null;
+            activeSplitSource = null;
+          } else {
+            activeSplitItemId = itemId;
+            activeSplitSource = source;
+          }
+          render();
+        } else if (action === "cancel-split") {
+          activeSplitItemId = null;
+          activeSplitSource = null;
+          render();
+        } else if (action === "confirm-split" && itemId) {
+          const panel = target.closest(".split-panel");
+          if (!panel) return;
+          const selected = [...panel.querySelectorAll('input[name="split-person"]:checked')].map((cb) => cb.value);
+          if (selected.length) splitItem(source, itemId, selected);
+        }
+      });
+
       elements.addPerson.addEventListener("click", addPerson);
 
       elements.peopleList.addEventListener("change", (event) => {
@@ -909,11 +1154,36 @@
         const action = target.dataset.action;
         const personId = target.dataset.person;
         const itemId = target.dataset.item;
-        if (!action || !personId) return;
+        if (!action) return;
+
+        if (action === "cancel-split") {
+          activeSplitItemId = null;
+          activeSplitSource = null;
+          render();
+          return;
+        }
+
+        if (!personId) return;
 
         if (action === "add-item") addItem(personId);
         if (action === "remove-item" && itemId) removeItem(personId, itemId);
         if (action === "remove-person") removePerson(personId);
+        if (action === "toggle-split" && itemId && personId) {
+          if (activeSplitItemId === itemId) {
+            activeSplitItemId = null;
+            activeSplitSource = null;
+          } else {
+            activeSplitItemId = itemId;
+            activeSplitSource = personId;
+          }
+          render();
+        }
+        if (action === "confirm-split" && itemId && personId) {
+          const panel = target.closest(".split-panel");
+          if (!panel) return;
+          const selected = [...panel.querySelectorAll('input[name="split-person"]:checked')].map((cb) => cb.value);
+          if (selected.length) splitItem(personId, itemId, selected);
+        }
       });
 
       elements.billName.addEventListener("input", (event) => updateBillField("name", event.target.value));
@@ -979,15 +1249,19 @@
           : "Extracted Items";
 
         stagingItems.innerHTML = "";
-        (data.items || []).forEach((item, i) => {
-          const row = document.createElement("div");
-          row.className = "staging-item";
-          row.innerHTML = `
-            <input type="checkbox" checked data-staging-index="${i}" />
-            <input type="text" value="${escapeAttr(item.name)}" data-staging-index="${i}" data-staging-field="name" />
-            <input type="text" value="${formatCurrency(item.price)}" data-staging-index="${i}" data-staging-field="price" />
-          `;
-          stagingItems.appendChild(row);
+        (data.items || []).forEach((item) => {
+          const qty = Math.max(1, Math.round(item.quantity || 1));
+          for (let q = 0; q < qty; q++) {
+            const idx = stagingItems.children.length;
+            const row = document.createElement("div");
+            row.className = "staging-item";
+            row.innerHTML = `
+              <input type="checkbox" checked data-staging-index="${idx}" />
+              <input type="text" value="${escapeAttr(item.name ?? "")}" data-staging-index="${idx}" data-staging-field="name" />
+              <input type="text" value="${formatCurrency(item.price)}" data-staging-index="${idx}" data-staging-field="price" />
+            `;
+            stagingItems.appendChild(row);
+          }
         });
 
         stagingMeta.innerHTML = "";
@@ -1061,11 +1335,7 @@
         });
 
         if (checkedItems.length) {
-          state.people.push({
-            id: createId(),
-            name: stagingData.merchant || "",
-            items: checkedItems,
-          });
+          state.unassigned.push(...checkedItems);
         }
 
         if (stagingData.merchant && !state.bill.name) {
