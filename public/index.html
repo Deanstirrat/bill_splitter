@@ -310,39 +310,54 @@
         margin: 0;
       }
 
-      .count-buttons {
+      .count-stepper {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        align-items: center;
+        gap: 10px;
       }
 
-      .count-btn {
+      .count-step-btn {
         width: 40px;
         height: 40px;
         border-radius: 10px;
         border: 1px solid #d1d5db;
         background: #f9fafb;
-        font-size: 15px;
-        font-weight: 600;
+        font-size: 20px;
+        font-weight: 500;
         color: #374151;
         cursor: pointer;
-        transition: background 0.1s, border-color 0.1s, color 0.1s;
-        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
+        line-height: 1;
       }
 
-      .count-btn:hover {
+      .count-step-btn:hover {
         background: #eff6ff;
         border-color: #93c5fd;
         color: #1d4ed8;
       }
 
-      .count-btn.selected {
-        background: #2563eb;
-        border-color: #2563eb;
-        color: #fff;
+      .count-num-input {
+        width: 72px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: 700;
+        padding: 8px 4px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+      }
+
+      .count-num-input::-webkit-inner-spin-button,
+      .count-num-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+      }
+
+      select:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
 
       .quick-names {
@@ -734,14 +749,10 @@
           <div id="people-empty">
             <div class="quick-setup">
               <p class="quick-setup-label">How many people?</p>
-              <div class="count-buttons" id="count-buttons">
-                <button class="count-btn" data-count="2">2</button>
-                <button class="count-btn" data-count="3">3</button>
-                <button class="count-btn" data-count="4">4</button>
-                <button class="count-btn" data-count="5">5</button>
-                <button class="count-btn" data-count="6">6</button>
-                <button class="count-btn" data-count="7">7</button>
-                <button class="count-btn" data-count="8">8</button>
+              <div class="count-stepper" id="count-stepper">
+                <button class="count-step-btn" id="count-dec" type="button">−</button>
+                <input id="count-input" type="number" min="1" max="99" class="count-num-input" placeholder="0" />
+                <button class="count-step-btn" id="count-inc" type="button">+</button>
               </div>
               <div class="quick-names" id="quick-names"></div>
               <button class="button" id="quick-add-btn" style="display:none">Add people</button>
@@ -840,7 +851,7 @@
         peopleEmpty: document.querySelector("#people-empty"),
         quickNames: document.querySelector("#quick-names"),
         quickAddBtn: document.querySelector("#quick-add-btn"),
-        countButtons: document.querySelector("#count-buttons"),
+        countInput: document.querySelector("#count-input"),
         summarySubtotal: document.querySelector("#summary-subtotal"),
         summaryTax: document.querySelector("#summary-tax"),
         summaryTip: document.querySelector("#summary-tip"),
@@ -1002,7 +1013,7 @@
                 <option value="">Assign to…</option>
                 ${state.people.map((p) => `<option value="${p.id}">${escapeAttr(p.name || "Untitled person")}</option>`).join("")}
               </select>`
-            : `<span></span>`;
+            : `<select disabled><option>Add people first</option></select>`;
           row.innerHTML = `
             <input type="text" value="${escapeAttr(item.name)}" placeholder="Item name" data-item="${item.id}" data-source="unassigned" data-field="name" />
             <input type="text" value="${escapeAttr(item.price)}" placeholder="$0.00" data-item="${item.id}" data-source="unassigned" data-field="price" />
@@ -1483,20 +1494,35 @@
           });
         });
         quickCount = 0;
-        elements.countButtons.querySelectorAll(".count-btn").forEach((b) => b.classList.remove("selected"));
+        if (elements.countInput) elements.countInput.value = "";
         elements.quickNames.innerHTML = "";
         elements.quickAddBtn.style.display = "none";
         render();
       };
 
-      elements.countButtons.addEventListener("click", (e) => {
-        const btn = e.target.closest(".count-btn");
-        if (!btn) return;
-        const count = Number(btn.dataset.count);
+      const applyQuickCount = (count) => {
+        if (count < 1) count = 1;
         quickCount = count;
-        elements.countButtons.querySelectorAll(".count-btn").forEach((b) => b.classList.remove("selected"));
-        btn.classList.add("selected");
+        elements.countInput.value = count;
         renderQuickNames(count);
+      };
+
+      elements.countInput.addEventListener("input", () => {
+        const count = parseInt(elements.countInput.value, 10);
+        if (!isNaN(count) && count > 0) {
+          quickCount = count;
+          renderQuickNames(count);
+        }
+      });
+
+      document.querySelector("#count-dec").addEventListener("click", () => {
+        const current = parseInt(elements.countInput.value, 10) || 0;
+        if (current > 1) applyQuickCount(current - 1);
+      });
+
+      document.querySelector("#count-inc").addEventListener("click", () => {
+        const current = parseInt(elements.countInput.value, 10) || 0;
+        applyQuickCount(current + 1);
       });
 
       elements.quickAddBtn.addEventListener("click", commitQuickSetup);
