@@ -689,6 +689,7 @@
         <h2>Unassigned Items</h2>
         <p class="section-label">Assign each item to a person or split it between multiple people</p>
         <div class="unassigned-items" id="unassigned-items"></div>
+        <button class="button secondary" id="add-unassigned-item">+ Add item</button>
       </section>
 
       <div class="layout">
@@ -860,6 +861,7 @@
         personSummary: document.querySelector("#person-summary"),
         unassignedSection: document.querySelector("#unassigned-section"),
         unassignedItems: document.querySelector("#unassigned-items"),
+        addUnassignedItem: document.querySelector("#add-unassigned-item"),
       };
 
       let activeSplitItemId = null;
@@ -997,11 +999,12 @@
         });
       };
 
+      const addUnassignedItem = () => {
+        state.unassigned.push({ id: createId(), name: "", price: "" });
+        render();
+      };
+
       const renderUnassigned = () => {
-        if (!state.unassigned.length) {
-          elements.unassignedSection.classList.remove("visible");
-          return;
-        }
         elements.unassignedSection.classList.add("visible");
         elements.unassignedItems.innerHTML = "";
         state.unassigned.forEach((item) => {
@@ -1131,8 +1134,8 @@
             if (activeSplitItemId === item.id && activeSplitSource === person.id) {
               const panel = document.createElement("div");
               panel.className = "split-panel visible";
-              const splitPeople = state.people.filter((p) => p.id !== person.id);
-              if (!splitPeople.length) {
+              const splitPeople = state.people;
+              if (splitPeople.length <= 1) {
                 panel.innerHTML = `<p class="balance-note">Add more people to split an item.</p><div class="button-row"><button class="button secondary" data-action="cancel-split">Cancel</button></div>`;
               } else {
                 panel.innerHTML = `
@@ -1218,10 +1221,7 @@
         state.people.push({
           id: createId(),
           name: "",
-          items: [
-            { id: createId(), name: "", price: "" },
-            { id: createId(), name: "", price: "" },
-          ],
+          items: [],
         });
         render();
       };
@@ -1323,6 +1323,7 @@
       });
 
       elements.addPerson.addEventListener("click", addPerson);
+      elements.addUnassignedItem.addEventListener("click", addUnassignedItem);
 
       elements.peopleList.addEventListener("change", (event) => {
         const target = event.target;
@@ -1487,10 +1488,7 @@
           state.people.push({
             id: createId(),
             name: input.value.trim(),
-            items: [
-              { id: createId(), name: "", price: "" },
-              { id: createId(), name: "", price: "" },
-            ],
+            items: [],
           });
         });
         quickCount = 0;
